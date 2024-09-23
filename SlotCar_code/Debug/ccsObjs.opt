@@ -1,0 +1,9 @@
+"./main.obj"
+"./source/ADC.obj"
+"./source/I2C.obj"
+"./source/LED.obj"
+"./source/SPI.obj"
+"./source/motor.obj"
+"../lnk_msp430f5437a.cmd"
+-llibmath.a
+-llibc.a
