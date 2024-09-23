@@ -1,7 +1,7 @@
 # FIXED
 
 source/ADC.obj: ../source/ADC.c
-source/ADC.obj: /Users/samuelkosik/Library/CloudStorage/OneDrive-VUT/VUT_Brno/Ing/3.\ Semester/SPS/Labs/SlotCar_Template/include/ADC.h
+source/ADC.obj: /Users/samuelkosik/Documents/GitHub/MPC_SPS_2024/SlotCar_code/include/ADC.h
 source/ADC.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdint.h
 source/ADC.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/_ti_config.h
 source/ADC.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/linkage.h
@@ -20,7 +20,7 @@ source/ADC.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1
 
 ../source/ADC.c:
 
-/Users/samuelkosik/Library/CloudStorage/OneDrive-VUT/VUT_Brno/Ing/3.\ Semester/SPS/Labs/SlotCar_Template/include/ADC.h:
+/Users/samuelkosik/Documents/GitHub/MPC_SPS_2024/SlotCar_code/include/ADC.h:
 
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdint.h:
 

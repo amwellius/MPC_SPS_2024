@@ -1,7 +1,7 @@
 # FIXED
 
 source/motor.obj: ../source/motor.c
-source/motor.obj: /Users/samuelkosik/Library/CloudStorage/OneDrive-VUT/VUT_Brno/Ing/3.\ Semester/SPS/Labs/SlotCar_Template/include/motor.h
+source/motor.obj: /Users/samuelkosik/Documents/GitHub/MPC_SPS_2024/SlotCar_code/include/motor.h
 source/motor.obj: /Applications/ti/ccs1280/ccs/ccs_base/msp430/include/msp430.h
 source/motor.obj: /Applications/ti/ccs1280/ccs/ccs_base/msp430/include/msp430f5437a.h
 source/motor.obj: /Applications/ti/ccs1280/ccs/ccs_base/msp430/include/in430.h
@@ -10,7 +10,7 @@ source/motor.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6
 
 ../source/motor.c:
 
-/Users/samuelkosik/Library/CloudStorage/OneDrive-VUT/VUT_Brno/Ing/3.\ Semester/SPS/Labs/SlotCar_Template/include/motor.h:
+/Users/samuelkosik/Documents/GitHub/MPC_SPS_2024/SlotCar_code/include/motor.h:
 
 /Applications/ti/ccs1280/ccs/ccs_base/msp430/include/msp430.h:
 

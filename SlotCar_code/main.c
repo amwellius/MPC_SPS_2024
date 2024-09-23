@@ -58,8 +58,6 @@ int main(void)
     MOTOR_ON();
     MOTOR_FW();
 
-    Create a github to share the code
-
 
 
 

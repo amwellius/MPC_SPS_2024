@@ -1,7 +1,7 @@
 # FIXED
 
 source/I2C.obj: ../source/I2C.c
-source/I2C.obj: /Users/samuelkosik/Library/CloudStorage/OneDrive-VUT/VUT_Brno/Ing/3.\ Semester/SPS/Labs/SlotCar_Template/include/I2C.h
+source/I2C.obj: /Users/samuelkosik/Documents/GitHub/MPC_SPS_2024/SlotCar_code/include/I2C.h
 source/I2C.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdint.h
 source/I2C.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/_ti_config.h
 source/I2C.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/linkage.h
@@ -20,7 +20,7 @@ source/I2C.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1
 
 ../source/I2C.c:
 
-/Users/samuelkosik/Library/CloudStorage/OneDrive-VUT/VUT_Brno/Ing/3.\ Semester/SPS/Labs/SlotCar_Template/include/I2C.h:
+/Users/samuelkosik/Documents/GitHub/MPC_SPS_2024/SlotCar_code/include/I2C.h:
 
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdint.h:
 
