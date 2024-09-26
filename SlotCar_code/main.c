@@ -52,39 +52,71 @@ int main(void)
     ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
     P8DIR |= 0b101110;    // H bridge
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////
     // USER TESTS
     motor_init() ;
-    MOTOR_ON();
-    MOTOR_FW();
+//    MOTOR_ON();
+//    MOTOR_FW();
 
 
+    ///////
+    WDTCTL = WDTPW | WDTHOLD;  // Stop watchdog timer
 
+    // Set P1.2 and P1.3 as output
+    P1DIR |= LED_FL_PIN + LED_FR_PIN;
+    P1SEL |= LED_FL_PIN + LED_FR_PIN;      // Set P1.2 and P1.3 to Timer output mode (PWM)
 
-    while(1) {
-        LED_FR_ON();
-        __delay_cycles(16000000);
-        LED_FR_OFF();
-        __delay_cycles(16000000);
+    // Configure Timer A for PWM
+    TA0CCR0 = 26666;           // Set PWM period to ~333ms for 3Hz flashing
+                               // Calculation: (16MHz / 8 prescaler) / 3Hz = 66666 / 2 = 26666
 
-//        LED_FL_ON();
-//        _delay_cycles(200);
-//        LED_FL_OFF();
-//        _delay_cycles(200);
-//
-//        LED_RR_ON();
-//        _delay_cycles(200);
-//        LED_RR_OFF();
-//        _delay_cycles(200);
-//
-//        LED_RL_ON();
-//        _delay_cycles(200);
-//        LED_RL_OFF();
-//        _delay_cycles(200);
+    // Configure Timer A Channel 1 for P1.2 (LED_FL)
+    TA0CCTL1 = OUTMOD_4;       // Toggle mode for CCR1 (toggle the output when TA0R reaches CCR1)
+    TA0CCR1 = 13333;           // Set CCR1 for 50% duty cycle
 
+    // Configure Timer A Channel 2 for P1.3 (LED_FR)
+    TA0CCTL2 = OUTMOD_4;       // Toggle mode for CCR2
+    TA0CCR2 = 13333;           // Set CCR2 for 50% duty cycle
+
+    // Start Timer A in up mode with SMCLK, /8 prescaler
+    TA0CTL = TASSEL_2 + MC_1 + ID_3;
+
+    while (1) {
+        // Main loop can remain empty, Timer A handles the toggling automatically
     }
 
 
+    ///////
+
+
+
+
+
+
+//    while(1) {
+//        LED_FR_ON();
+//        __delay_cycles(8000000);
+//        LED_FR_OFF();
+//        __delay_cycles(8000000);
+//
+//        LED_FL_ON();
+//        __delay_cycles(8000000);
+//        LED_FL_OFF();
+//        __delay_cycles(8000000);
+////
+////        LED_RR_ON();
+////        __delay_cycles(8000000);
+////        LED_RR_OFF();
+////        __delay_cycles(8000000);
+//
+//        LED_RL_ON();
+//        __delay_cycles(8000000);
+//        LED_RL_OFF();
+//        __delay_cycles(8000000);
+
+//    }
+
+//////////////////////////////////////////////////////////////////////////////////
 
 //    while(1)
 //    {
@@ -214,3 +246,10 @@ __interrupt void ADC12ISR (void)
   default: break;
   }
 }
+
+//// Timer A0 interrupt service routine
+//#pragma vector = TIMER0_A0_VECTOR
+//__interrupt void Timer_A (void) {
+//    P1OUT ^= LED1 + LED2;      // Toggle LEDs
+//}
+
