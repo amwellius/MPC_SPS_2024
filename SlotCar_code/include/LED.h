@@ -28,21 +28,28 @@
  * L = left, R = right
  */
 
-#define LED_FL_ON() (LED_FL_PORT |= LED_FL_PIN)
-#define LED_FL_OFF() (LED_FL_PORT &= ~LED_FL_PIN)
+#define LED_FL_ON()     (LED_FL_PORT |= LED_FL_PIN)
+#define LED_FL_toggle() (LED_FL_PORT ^= LED_FL_PIN)
+#define LED_FL_OFF()    (LED_FL_PORT &= ~LED_FL_PIN)
 
-#define LED_FR_ON() (LED_FR_PORT |= LED_FR_PIN)
-#define LED_FR_OFF() (LED_FR_PORT &= ~LED_FR_PIN)
+#define LED_FR_ON()     (LED_FR_PORT |= LED_FR_PIN)
+#define LED_FR_toggle() (LED_FR_PORT ^= LED_FR_PIN)
+#define LED_FR_OFF()    (LED_FR_PORT &= ~LED_FR_PIN)
 
-#define LED_RL_ON() (LED_RL_PORT |= LED_RL_PIN)
-#define LED_RL_OFF() (LED_RL_PORT &= ~LED_RL_PIN)
+#define LED_RL_ON()     (LED_RL_PORT |= LED_RL_PIN)
+#define LED_RL_toggle() (LED_RL_PORT ^= LED_RL_PIN)
+#define LED_RL_OFF()    (LED_RL_PORT &= ~LED_RL_PIN)
 
-#define LED_RR_ON() (LED_RR_PORT |= LED_RR_PIN)
-#define LED_RR_OFF() (LED_RR_PORT &= ~LED_RR_PIN)
+#define LED_RR_ON()     (LED_RR_PORT |= LED_RR_PIN)
+#define LED_RR_toggle() (LED_RR_PORT ^= LED_RR_PIN)
+#define LED_RR_OFF()    (LED_RR_PORT &= ~LED_RR_PIN)
+
 
 // functions prototypes
 void LED_init(void);
+void led_flash_all(uint8_t const n); // number of flashes
 
 // variables
+
 
 #endif /* LED_H_ */
