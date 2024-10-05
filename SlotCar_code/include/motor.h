@@ -22,23 +22,15 @@
 #define H_IN_PIN        0x08
 
 // H_Bridge control
-// old controls
-//#define MOTOR_ON()      (H_IN_PORT |= H_IN_PIN)     // true = motor is ON
-//#define MOTOR_OFF()     (H_IN_PORT &= ~H_IN_PIN)    // false = motor is OFF
-//
-//#define MOTOR_FW()      (H_DIRECTION_PORT |= H_DIRECTION_PIN)   // motor forward mode, logic 11
-//#define MOTOR_RV()      (H_DIRECTION_PORT &= ~H_DIRECTION_PIN)  // motor reverse mode, logic 01
-
-
 #define H_IN_h          (H_IN_PORT |= H_IN_PIN)     // sets pin to high
 #define H_IN_l          (H_IN_PORT &= ~H_IN_PIN)    // sets pin to low
-
 #define H_BRAKE_h       (H_BRAKE_PORT |= H_BRAKE_PIN)
 #define H_BRAKE_l       (H_BRAKE_PORT &= ~H_BRAKE_PIN)
-
 // These below pins can be operated by PWM control. PWM 50%+ changes forward speed, 50%- is reverse speed
-#define H_DIRECTION_h   (H_DIRECTION_PORT |= H_DIRECTION_PIN)
-#define H_DIRECTION_l   (H_DIRECTION_PORT &= ~H_DIRECTION_PIN)
+#define H_DIRECTION_l   (H_DIRECTION_PORT |= H_DIRECTION_PIN)   // reversed h and l (dont know why but it works this way)
+#define H_DIRECTION_h   (H_DIRECTION_PORT &= ~H_DIRECTION_PIN)  // reversed h and l (dont know why but it works this way)
+
+// variables
 
 
 // FUNCTIONS
@@ -46,9 +38,7 @@ void motor_init(void);
 void motor_forward(void);
 void motor_reverse(void);
 void motor_brake(void);
+void motor_idle(void);
 
-
-
-// variables
 
 #endif /* MOTOR_H_ */
