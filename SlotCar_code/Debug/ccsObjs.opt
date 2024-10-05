@@ -4,6 +4,7 @@
 "./source/LED.obj"
 "./source/SPI.obj"
 "./source/motor.obj"
+"./source/timers.obj"
 "../lnk_msp430f5437a.cmd"
 -llibmath.a
 -llibc.a

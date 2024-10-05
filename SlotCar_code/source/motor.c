@@ -10,6 +10,7 @@
 void motor_init(void) {
     P8DIR |=    0x2C; // P8.2, P8.3 and P8.5 as outputs
     P8DIR &= ~  0x10; //P8.4 as input
+    motor_idle();
 }
 
 // function for motor control forward
@@ -31,4 +32,12 @@ void motor_brake(void) {
     H_IN_l;
     H_DIRECTION_l;
     H_BRAKE_h;
+}
+
+// function for motor control idle. This means the motor does not have power
+// the motor doesn't do anything here
+void motor_idle(void) {
+    H_IN_l;
+    H_DIRECTION_l;
+    H_BRAKE_l;
 }

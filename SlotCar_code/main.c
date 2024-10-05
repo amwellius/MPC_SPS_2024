@@ -1,4 +1,5 @@
 #include <msp430.h>
+#include "include/timers.h"
 #include "include/SPI.h"
 #include "include/I2C.h"
 #include "include/LED.h"
@@ -13,7 +14,6 @@
 /**
  * main.c
  */
-void initClockTo16MHz(void);
 
 uint16_t results[5];
 uint16_t i, index;
@@ -27,15 +27,33 @@ uint8_t TXByteCtr = 0;
 uint8_t TransmitIndex = 0;
 */
 
+
+
 int main(void)
 {
     WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
-    initClockTo16MHz();
+    initClockTo16MHz();         // initialize clock timer 16 MHz
+    __bis_SR_register(GIE);     // Enable global interrupts
 #ifdef SPI
     uint8_t SPIData;
     SPI_init();
 #endif
     LED_init();
+    test_timer();
+    motor_init();
+    while (1) {
+        if (motor_flag)                 // Check if flag is set
+        {
+           motor_forward();            // Run the motor function
+           __delay_cycles(2000000);
+//           motor_idle();
+           motor_brake();
+           motor_flag = 0;             // Clear the flag
+        }
+//        LED_init();
+//        __delay_cycles(32000000);
+    }
+
   //  ADC_init();
     _BIS_SR(GIE);
 #ifdef I2C
@@ -54,67 +72,59 @@ int main(void)
 
 /////////////////////////////////////////////////////////////////////////////////////////////
     // USER TESTS
-    motor_init() ;
-//    MOTOR_ON();
-//    MOTOR_FW();
+
+//
 
 
     ///////
-    WDTCTL = WDTPW | WDTHOLD;  // Stop watchdog timer
+//    motor_init();
+//    H_IN_h;
+////    H_DIRECTION_h;
+////    while(1){
+////
+////    }
+//    WDTCTL = WDTPW | WDTHOLD;  // Stop watchdog timer
+//
+//    // Set P8.2 as output
+//    P8DIR |= H_DIRECTION_PIN;
+//    P8SEL |= H_DIRECTION_PIN;      // Set P2.2 to Timer output mode (PWM)
+//
+//    // Configure Timer A for PWM
+////    TA0CCR2 = 39960;           // Set PWM period to ~333ms for 3Hz flashing
+//                               // Calculation: (16MHz / 8 prescaler) / 3Hz = 66666 / 2 = 26666
+//
+//    // Configure Timer A Channel 1 for P8.2 ()
+//    TA0CCTL1 = OUTMOD_4;       // Toggle mode for CCR2 (toggle the output when TA0R reaches CCR1)
+//    TA0CCR2 = 399960;           // Set CCR2 for 13333 is 50% duty cycle, 15960 is 60%
+//
+//    // Start Timer A in up mode with SMCLK, /8 prescaler
+//    TA0CTL = TASSEL_2 + MC_1 + ID_3;
+//
+//    while (1) {
+//        // Main loop can remain empty, Timer A handles the toggling automatically
+//    }
 
-    // Set P1.2 and P1.3 as output
-    P1DIR |= LED_FL_PIN + LED_FR_PIN;
-    P1SEL |= LED_FL_PIN + LED_FR_PIN;      // Set P1.2 and P1.3 to Timer output mode (PWM)
 
-    // Configure Timer A for PWM
-    TA0CCR0 = 26666;           // Set PWM period to ~333ms for 3Hz flashing
-                               // Calculation: (16MHz / 8 prescaler) / 3Hz = 66666 / 2 = 26666
+    /////
 
-    // Configure Timer A Channel 1 for P1.2 (LED_FL)
-    TA0CCTL1 = OUTMOD_4;       // Toggle mode for CCR1 (toggle the output when TA0R reaches CCR1)
-    TA0CCR1 = 13333;           // Set CCR1 for 50% duty cycle
+//    __delay_cycles(16000000);     // delay 1 second
+//    __delay_cycles(32000000);     // delay 2 seconds
 
-    // Configure Timer A Channel 2 for P1.3 (LED_FR)
-    TA0CCTL2 = OUTMOD_4;       // Toggle mode for CCR2
-    TA0CCR2 = 13333;           // Set CCR2 for 50% duty cycle
-
-    // Start Timer A in up mode with SMCLK, /8 prescaler
-    TA0CTL = TASSEL_2 + MC_1 + ID_3;
-
+    motor_init();
     while (1) {
-        // Main loop can remain empty, Timer A handles the toggling automatically
+        motor_forward();
+        __delay_cycles(5000000);
+        motor_idle();
+        __delay_cycles(5000000);
+//        motor_reverse();
+//        __delay_cycles(5000000);
+
+//        motor_idle();
+//        __delay_cycles(8000000);
+
     }
 
 
-    ///////
-
-
-
-
-
-
-//    while(1) {
-//        LED_FR_ON();
-//        __delay_cycles(8000000);
-//        LED_FR_OFF();
-//        __delay_cycles(8000000);
-//
-//        LED_FL_ON();
-//        __delay_cycles(8000000);
-//        LED_FL_OFF();
-//        __delay_cycles(8000000);
-////
-////        LED_RR_ON();
-////        __delay_cycles(8000000);
-////        LED_RR_OFF();
-////        __delay_cycles(8000000);
-//
-//        LED_RL_ON();
-//        __delay_cycles(8000000);
-//        LED_RL_OFF();
-//        __delay_cycles(8000000);
-
-//    }
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -148,104 +158,85 @@ int main(void)
 //        */
 //#endif
 //     }
-}
-
-void initClockTo16MHz()
-{
-    UCSCTL3 |= SELREF_2;                      // Set DCO FLL reference = REFO
-    UCSCTL4 |= SELA_2;                        // Set ACLK = REFO
-    __bis_SR_register(SCG0);                  // Disable the FLL control loop
-    UCSCTL0 = 0x0000;                         // Set lowest possible DCOx, MODx
-    UCSCTL1 = DCORSEL_5;                      // Select DCO range 16MHz operation
-    UCSCTL2 = FLLD_0 + 487;                   // Set DCO Multiplier for 16MHz
-                                              // (N + 1) * FLLRef = Fdco
-                                              // (487 + 1) * 32768 = 16MHz
-                                              // Set FLL Div = fDCOCLK
-    __bic_SR_register(SCG0);                  // Enable the FLL control loop
-
-    // Worst-case settling time for the DCO when the DCO range bits have been
-    // changed is n x 32 x 32 x f_MCLK / f_FLL_reference. See UCS chapter in 5xx
-    // UG for optimization.
-    // 32 x 32 x 16 MHz / 32,768 Hz = 500000 = MCLK cycles for DCO to settle
-    __delay_cycles(500000);//
-    // Loop until XT1,XT2 & DCO fault flag is cleared
-    do
-    {
-        UCSCTL7 &= ~(XT2OFFG + XT1LFOFFG + DCOFFG); // Clear XT2,XT1,DCO fault flags
-        SFRIFG1 &= ~OFIFG;                          // Clear fault flags
-    }while (SFRIFG1&OFIFG);                         // Test oscillator fault flag
-}
-
-#pragma vector = USCI_B0_VECTOR
-__interrupt void USCI_B0_ISR(void)
-{
-  uint8_t rx_val = 0;
-
-  switch(__even_in_range(UCB0IV,12))
-  {
-  case  0: break;                           // Vector  0: No interrupts
-  case  2: break;                           // Vector  2: ALIFG
-  case  4: break;                           // Vector  4: NACKIFG
-  case  6: break;                           // Vector  6: STTIFG
-  case  8: break;                           // Vector  8: STPIFG
-  case USCI_I2C_UCRXIFG:
-        rx_val = UCB0RXBUF;
-        if (RXByteCtr)
-        {
-          RX_buffer[ReceiveIndex++] = rx_val;
-          RXByteCtr--;
-        }
-
-        if (RXByteCtr == 1)
-        {
-          UCB0CTL1 |= UCTXSTP;
-        }
-        else if (RXByteCtr == 0)
-        {
-          UCB0IE &= ~UCRXIE;
-        }
-        break;                      // Interrupt Vector: I2C Mode: UCRXIFG
-  case 12: break;                           // Vector 12: TXIFG
-  default: break;
-  }
-}
+} // **** END OF MAIN FUNCTION ****
 
 
-#pragma vector=ADC12_VECTOR
-__interrupt void ADC12ISR (void)
-{
-  switch(__even_in_range(ADC12IV,34))
-  {
-  case  0: break;                           // Vector  0:  No interrupt
-  case  2: break;                           // Vector  2:  ADC overflow
-  case  4: break;                           // Vector  4:  ADC timing overflow
-  case  6: break;                           // Vector  6:  ADC12IFG0
-  case  8: break;                           // Vector  8:  ADC12IFG1
-  case 10: break;                           // Vector 10:  ADC12IFG2
-  case 12: break;                            // Vector 12:  ADC12IFG3
-  case 14: break;                           // Vector 14:  ADC12IFG4
-  case 16: break;                           // Vector 16:  ADC12IFG5
-  case 18: break;                           // Vector 18:  ADC12IFG6
-  case 20:                            // Vector 20:  ADC12IFG7
-      LED_FL_ON();
-      ADC12CTL0 &=~ADC12SC;                // For sequence-of-Channels mode, ADC12SC must be cleared by software after each sequence to trigger another sequence
-      results[0] = ADC12MEM3;                 // Move results, IFG is cleared
-      results[1] = ADC12MEM4;                 // Move results, IFG is cleared
-      results[2] = ADC12MEM5;                 // Move results, IFG is cleared
-      results[3] = ADC12MEM6;                 // Move results, IFG is cleared
-      results[4] = ADC12MEM7;                 // Move results, IFG is cleared
-      LED_FL_OFF();
-      ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
-  case 22: break;                           // Vector 22:  ADC12IFG8
-  case 24: break;                           // Vector 24:  ADC12IFG9
-  case 26: break;                           // Vector 26:  ADC12IFG10
-  case 28: break;                           // Vector 28:  ADC12IFG11
-  case 30: break;                           // Vector 30:  ADC12IFG12
-  case 32: break;                           // Vector 32:  ADC12IFG13
-  case 34: break;                           // Vector 34:  ADC12IFG14
-  default: break;
-  }
-}
+
+
+/// interupts
+//#pragma vector = USCI_B0_VECTOR
+//__interrupt void USCI_B0_ISR(void)
+//{
+//  uint8_t rx_val = 0;
+//
+//  switch(__even_in_range(UCB0IV,12))
+//  {
+//  case  0: break;                           // Vector  0: No interrupts
+//  case  2: break;                           // Vector  2: ALIFG
+//  case  4: break;                           // Vector  4: NACKIFG
+//  case  6: break;                           // Vector  6: STTIFG
+//  case  8: break;                           // Vector  8: STPIFG
+//  case USCI_I2C_UCRXIFG:
+//        rx_val = UCB0RXBUF;
+//        if (RXByteCtr)
+//        {
+//          RX_buffer[ReceiveIndex++] = rx_val;
+//          RXByteCtr--;
+//        }
+//
+//        if (RXByteCtr == 1)
+//        {
+//          UCB0CTL1 |= UCTXSTP;
+//        }
+//        else if (RXByteCtr == 0)
+//        {
+//          UCB0IE &= ~UCRXIE;
+//        }
+//        break;                      // Interrupt Vector: I2C Mode: UCRXIFG
+//  case 12: break;                           // Vector 12: TXIFG
+//  default: break;
+//  }
+//}
+//
+//
+//#pragma vector=ADC12_VECTOR
+//__interrupt void ADC12ISR (void)
+//{
+//  switch(__even_in_range(ADC12IV,34))
+//  {
+//  case  0: break;                           // Vector  0:  No interrupt
+//  case  2: break;                           // Vector  2:  ADC overflow
+//  case  4: break;                           // Vector  4:  ADC timing overflow
+//  case  6: break;                           // Vector  6:  ADC12IFG0
+//  case  8: break;                           // Vector  8:  ADC12IFG1
+//  case 10: break;                           // Vector 10:  ADC12IFG2
+//  case 12: break;                            // Vector 12:  ADC12IFG3
+//  case 14: break;                           // Vector 14:  ADC12IFG4
+//  case 16: break;                           // Vector 16:  ADC12IFG5
+//  case 18: break;                           // Vector 18:  ADC12IFG6
+//  case 20:                            // Vector 20:  ADC12IFG7
+//      LED_FL_ON();
+//      ADC12CTL0 &=~ADC12SC;                // For sequence-of-Channels mode, ADC12SC must be cleared by software after each sequence to trigger another sequence
+//      results[0] = ADC12MEM3;                 // Move results, IFG is cleared
+//      results[1] = ADC12MEM4;                 // Move results, IFG is cleared
+//      results[2] = ADC12MEM5;                 // Move results, IFG is cleared
+//      results[3] = ADC12MEM6;                 // Move results, IFG is cleared
+//      results[4] = ADC12MEM7;                 // Move results, IFG is cleared
+//      LED_FL_OFF();
+//      ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
+//  case 22: break;                           // Vector 22:  ADC12IFG8
+//  case 24: break;                           // Vector 24:  ADC12IFG9
+//  case 26: break;                           // Vector 26:  ADC12IFG10
+//  case 28: break;                           // Vector 28:  ADC12IFG11
+//  case 30: break;                           // Vector 30:  ADC12IFG12
+//  case 32: break;                           // Vector 32:  ADC12IFG13
+//  case 34: break;                           // Vector 34:  ADC12IFG14
+//  default: break;
+//  }
+//}
+
+//**********************************************************************************************
+
 
 //// Timer A0 interrupt service routine
 //#pragma vector = TIMER0_A0_VECTOR
