@@ -1,11 +1,12 @@
 /*
  * motor.c
  *
- *  Created on: 29. 9. 2020
- *      Author: dosedel
+ *  Created on: 23/September/2024
+ *      Author: xkosik09
  */
 
 #include "include/motor.h"
+#include "include/timers.h"
 
 void motor_init(void) {
     P8DIR |=    0x2C; // P8.2, P8.3 and P8.5 as outputs
@@ -39,5 +40,23 @@ void motor_brake(void) {
 void motor_idle(void) {
     H_IN_l;
     H_DIRECTION_l;
+    H_BRAKE_l;
+}
+
+
+
+
+
+
+
+/* Function for using the PWM signal for controlling the motor.
+ * PWM levels and numbers:
+ *
+ */
+void motor_pwm(pwm_level_t level)
+{
+    unsigned int duty_cycle = level; // Map level to duty cycle
+    init_timerA0(duty_cycle);
+    H_IN_h;
     H_BRAKE_l;
 }

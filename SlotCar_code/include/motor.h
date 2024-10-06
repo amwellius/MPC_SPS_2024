@@ -1,8 +1,8 @@
 /*
  * motor.h
  *
- *  Created on: 29. 9. 2020
- *      Author: dosedel
+ *  Created on: 23/September/2024
+ *      Author: xkosik09
  */
 
 #ifndef MOTOR_H_
@@ -31,11 +31,18 @@
 #define H_DIRECTION_h   (H_DIRECTION_PORT &= ~H_DIRECTION_PIN)  // reversed h and l (dont know why but it works this way)
 
 // variables
+typedef enum {
+    PWM_LEVEL_1 = 300,  // 25%
+    PWM_LEVEL_2 = 200,  // 50%
+    PWM_LEVEL_3 = 100,  // 75%
+    PWM_LEVEL_4 = 000   // 100%
+} pwm_level_t;
 
 
 // FUNCTIONS
 void motor_init(void);
 void motor_forward(void);
+void motor_pwm(pwm_level_t level);
 void motor_reverse(void);
 void motor_brake(void);
 void motor_idle(void);
