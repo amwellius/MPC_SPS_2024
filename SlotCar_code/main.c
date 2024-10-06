@@ -41,22 +41,18 @@ int main(void)
     LED_init();
     init_timerA0();
     init_timerB0();
-//    init_timerA1();
     motor_init();
 
     // use motor_forward function. The Direction pin is driven by the PWM signal.
     H_IN_h;
     H_BRAKE_l;
 
-    TA0CCR2 = 00;                     // Set duty cycle (50%)
+    TA0CCR2 = 50;                     // Set duty cycle (50%)
     __delay_cycles(32000000);
-    TA0CCR2 = 300;
+    TA0CCR2 = 280;
 
     while (1) {
-        if (flag_500ms) {                 // Check if flag is set
-//            motor_forward();            // Run the motor function
-            __delay_cycles(2000000);
-//            motor_idle();
+        if (flag_500ms) {               // Check if flag is set
             LED_FR_toggle();
             flag_500ms = 0;             // Clear the flag
         }
@@ -64,7 +60,6 @@ int main(void)
             LED_FL_toggle();
             flag_1000ms = 0;
         }
-
     }
 
   //  ADC_init();
@@ -82,60 +77,6 @@ int main(void)
     P1DIR |= 0x04;
     ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
     P8DIR |= 0b101110;    // H bridge
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-    // USER TESTS
-
-//
-
-
-    ///////
-//    motor_init();
-//    H_IN_h;
-////    H_DIRECTION_h;
-////    while(1){
-////
-////    }
-//    WDTCTL = WDTPW | WDTHOLD;  // Stop watchdog timer
-//
-//    // Set P8.2 as output
-//    P8DIR |= H_DIRECTION_PIN;
-//    P8SEL |= H_DIRECTION_PIN;      // Set P2.2 to Timer output mode (PWM)
-//
-//    // Configure Timer A for PWM
-////    TA0CCR2 = 39960;           // Set PWM period to ~333ms for 3Hz flashing
-//                               // Calculation: (16MHz / 8 prescaler) / 3Hz = 66666 / 2 = 26666
-//
-//    // Configure Timer A Channel 1 for P8.2 ()
-//    TA0CCTL1 = OUTMOD_4;       // Toggle mode for CCR2 (toggle the output when TA0R reaches CCR1)
-//    TA0CCR2 = 399960;           // Set CCR2 for 13333 is 50% duty cycle, 15960 is 60%
-//
-//    // Start Timer A in up mode with SMCLK, /8 prescaler
-//    TA0CTL = TASSEL_2 + MC_1 + ID_3;
-//
-//    while (1) {
-//        // Main loop can remain empty, Timer A handles the toggling automatically
-//    }
-
-
-    /////
-
-//    __delay_cycles(16000000);     // delay 1 second
-//    __delay_cycles(32000000);     // delay 2 seconds
-
-    motor_init();
-    while (1) {
-        motor_forward();
-        __delay_cycles(5000000);
-        motor_idle();
-        __delay_cycles(5000000);
-//        motor_reverse();
-//        __delay_cycles(5000000);
-
-//        motor_idle();
-//        __delay_cycles(8000000);
-
-    }
 
 
 
@@ -250,10 +191,4 @@ int main(void)
 
 //**********************************************************************************************
 
-
-//// Timer A0 interrupt service routine
-//#pragma vector = TIMER0_A0_VECTOR
-//__interrupt void Timer_A (void) {
-//    P1OUT ^= LED1 + LED2;      // Toggle LEDs
-//}
 

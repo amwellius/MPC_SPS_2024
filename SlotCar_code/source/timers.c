@@ -46,15 +46,12 @@ void initClockTo16MHz()
     }while (SFRIFG1&OFIFG);                         // Test oscillator fault flag
 }
 
-
-// test function
-//void init_timerA0(void)
-//{
-//    TA0CCR0 = 65535;                    // Set the maximum count (65535)
-//    TA0CCTL0 |= CCIE;                   // Enable interrupt for CCR0
-//    TA0CTL = TASSEL_2 + MC_1 + ID_3;    // SMCLK, Up mode, Prescaler = 8 (ID_3)
-//}
-
+/* Timer A, instance 0. This function generates 20KHz PWM signal for the motor.
+ It only driver the PHASE pin, P8.2 - DIRECTION.
+ 50%  = off
+ 0%   = forward full speed
+ 100% = reverse full speed
+*/
 void init_timerA0(void)
 {
     P8DIR |= BIT2;                     // Set P8.2 as output for PWM signal (TA0.2)
@@ -62,54 +59,40 @@ void init_timerA0(void)
 
     TA0CCR0 = 800;                     // Set the period for 20 kHz PWM
     TA0CCTL2 = OUTMOD_7;               // Set/reset mode for TA0.2
-    TA0CCR2 = 00;                     // Set duty cycle (50%)
+    TA0CCR2 = 000;                     // Set duty cycle (400 = 50%; 600 = 75%; 200 = 25%)
 
     TA0CTL = TASSEL_2 + MC_1;          // SMCLK, Up mode
 }
 
-void init_timerA1(void)
-{
-    P1DIR |= BIT2;                     // Set P1.2 as output for PWM signal (TA1.1)
-    P1SEL |= BIT2;                     // Select Timer_A function for P1.2
-
-    TA1CCR0 = 800;                     // Set the period for 20 kHz PWM
-    TA1CCTL1 = OUTMOD_7;               // Set/reset mode for TA1.1
-    TA1CCR1 = 600;                     // Set duty cycle (400 = 50%; 600 = 75%; 200 = 25%)
-
-    TA1CTL = TASSEL_2 + MC_1;          // SMCLK, Up mode
-}
-
+// Timer B, instance 0. This function sets up the timer to count up to CCR0 level.
 void init_timerB0(void)
 {
-    P4DIR |= BIT2;                     // Set P4.2 as output for PWM signal (TB0.2)
-    P4SEL |= BIT2;                     // Select Timer_B function for P4.2
-
-    TB0CCR0 = 800;                     // Set the period for 20 kHz PWM
-    TB0CCTL2 = OUTMOD_7;               // Set/reset mode for TB0.2
-    TB0CCR2 = 100;                     // Set duty cycle (400 = 50%; 600 = 75%; 200 = 25%)
-
-    TB0CTL = TASSEL_2 + MC_1;          // SMCLK, Up mode
+    TB0CCR0 = 65535;                    // Set the maximum count (65535)
+    TB0CCTL0 |= CCIE;                   // Enable interrupt for CCR0
+    TB0CTL = TASSEL_2 + MC_1 + ID_3;    // SMCLK, Up mode, Prescaler = 8 (ID_3)
 }
 
 
 
 // ***************************************************************************** //
 // INTERUPTS
-//#pragma vector = TIMER0_A0_VECTOR
-//__interrupt void Timer_A(void)
-//{
-//    overflow_count1++;                   // Increment overflow counter 1
-//    overflow_count2++;                   // Increment overflow counter 2
-//    if (overflow_count1 >= half_sec) {
-//        flag_500ms = 1;                 // Set flag for 0.5 sec
-//        overflow_count1 = 0;             // Reset counter
-//    }
-//    if (overflow_count2 >= one_sec) {
-//        flag_1000ms = 1;                 // Set flag for 1 sec
-//        overflow_count2 = 0;             // Reset counter
-//    }
-//
-//}
+
+// Interrupt of Timer B0
+#pragma vector = TIMER0_B0_VECTOR
+__interrupt void Timer_B0(void)
+{
+    overflow_count1++;                   // Increment overflow counter 1
+    overflow_count2++;                   // Increment overflow counter 2
+    if (overflow_count1 >= half_sec) {
+        flag_500ms = 1;                 // Set flag for 0.5 sec
+        overflow_count1 = 0;             // Reset counter
+    }
+    if (overflow_count2 >= one_sec) {
+        flag_1000ms = 1;                 // Set flag for 1 sec
+        overflow_count2 = 0;             // Reset counter
+    }
+
+}
 
 
 

@@ -19,7 +19,8 @@ void LED_init(void)
 }
 
 //flash all LEDs n times.
-void led_flash_all(uint8_t n) {
+void led_flash_all(uint8_t n)
+{
     // set all LEDs off
     LED_FR_OFF();
     LED_FL_OFF();
