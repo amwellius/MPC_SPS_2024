@@ -39,25 +39,20 @@ int main(void)
     SPI_init();
 #endif
     LED_init();
-    init_timerA0();
+//    init_timerA0();
     init_timerB0();
     motor_init();
 
-    // use motor_forward function. The Direction pin is driven by the PWM signal.
-    H_IN_h;
-    H_BRAKE_l;
-
-    TA0CCR2 = 50;                     // Set duty cycle (50%)
-    __delay_cycles(32000000);
-    TA0CCR2 = 280;
-
+    // infinite loop
     while (1) {
         if (flag_500ms) {               // Check if flag is set
             LED_FR_toggle();
+            motor_pwm(PWM_LEVEL_1);
             flag_500ms = 0;             // Clear the flag
         }
         if (flag_1000ms) {
             LED_FL_toggle();
+            motor_pwm(PWM_LEVEL_2);
             flag_1000ms = 0;
         }
     }

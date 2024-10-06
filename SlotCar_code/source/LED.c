@@ -1,8 +1,8 @@
 /*
  * LED.c
  *
- *  Created on: 24. 9. 2020
- *      Author: dosedel
+ *  Created on: 23/September/2024
+ *      Author: xkosik09
  */
 
 #include "include/LED.h"
