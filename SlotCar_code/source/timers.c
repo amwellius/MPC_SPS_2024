@@ -52,14 +52,19 @@ void initClockTo16MHz()
  0%   = forward full speed
  100% = reverse full speed
 */
-void init_timerA0(void)
+void init_timerA0(unsigned int duty_cycle)
 {
     P8DIR |= BIT2;                     // Set P8.2 as output for PWM signal (TA0.2)
     P8SEL |= BIT2;                     // Select Timer_A function for P8.2
 
     TA0CCR0 = 800;                     // Set the period for 20 kHz PWM
     TA0CCTL2 = OUTMOD_7;               // Set/reset mode for TA0.2
-    TA0CCR2 = 000;                     // Set duty cycle (400 = 50%; 600 = 75%; 200 = 25%)
+
+    // Set duty cycle (400 = 50%; 600 = 75%; 200 = 25%)
+    if (duty_cycle <= TA0CCR0)
+    {                                   // Ensure duty cycle doesn't exceed period
+        TA0CCR2 = duty_cycle;           // Set new duty cycle
+    }
 
     TA0CTL = TASSEL_2 + MC_1;          // SMCLK, Up mode
 }
