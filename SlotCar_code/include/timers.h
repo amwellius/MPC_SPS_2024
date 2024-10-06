@@ -12,12 +12,16 @@
 #include <msp430.h>
 
 // Variables
-extern volatile unsigned int overflow_count;    // Declare overflow_count as extern
-extern volatile unsigned char motor_flag;       // Declare motor_flag as extern
+extern volatile unsigned int overflow_count1;    // Declare overflow_count1 as extern
+extern volatile unsigned int overflow_count2;    // Declare overflow_count2 as extern
+extern volatile unsigned char flag_500ms;       // Declare flag_500ms as extern
+extern volatile unsigned char flag_1000ms;       // Declare flag_1000ms as extern
 
 // FUNCTIONS
 void initClockTo16MHz(void);        // main clock 16MHz
-void test_timer(void);              // test timers functions for
+void init_timerA0(void);            // timer A, instance 0
+void init_timerB0(void);            // timer B, instance 0
+void init_timerA1(void);            // timer A, instance 1 for PWM signal
 
 
 #endif /* LED_H_ */
