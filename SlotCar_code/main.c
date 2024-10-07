@@ -9,17 +9,17 @@
 #include "include/motor.h"
 
 //#define SPI
-#define I2C
-#define I2C_RX_BUFFER_SIZE 5
+//#define I2C
+//#define I2C_RX_BUFFER_SIZE 5
 /**
  * main.c
  */
 
 uint16_t i, index;
 // I2C
-uint8_t RX_buffer[I2C_RX_BUFFER_SIZE] = {0};
-uint8_t RXByteCtr = 0;
-uint8_t ReceiveIndex = 0;
+//uint8_t RX_buffer[I2C_RX_BUFFER_SIZE] = {0};
+//uint8_t RXByteCtr = 0;
+//uint8_t ReceiveIndex = 0;
 /*
 uint8_t TransmitBuffer[MAX_BUFFER_SIZE] = {0};
 uint8_t TXByteCtr = 0;
@@ -44,7 +44,8 @@ int main(void)
     LED_init();
     init_timerB0();
     motor_init();
-    motor_pwm(PWM_LEVEL_2);
+//    motor_pwm(PWM_LEVEL_3);
+
     ADC_init();
     ADC_start();
 
@@ -57,7 +58,7 @@ int main(void)
             flag_500ms = 0;             // Clear the flag
         }
         if (flag_1000ms) {
-//            LED_FL_toggle();
+            LED_FL_toggle();
 //            motor_pwm(PWM_LEVEL_2);
             flag_1000ms = 0;
         }
@@ -68,32 +69,74 @@ int main(void)
         uint16_t y_axis = ADC_get_result(3);
         uint16_t z_axis = ADC_get_result(4);
 
-        if (z_axis < 1950 )
+        // left / right
+        switch(z_axis)
         {
+        case 0 ... 1945:    // left
             LED_RL_ON();
             LED_RR_OFF();
-        };
-
-        if (z_axis > 1960 )
-        {
+            motor_pwm(PWM_LEVEL_2);
+            break;
+        case 1965 ... 4096: // right
             LED_RL_OFF();
             LED_RR_ON();
-        };
+            motor_pwm(PWM_LEVEL_2);
+            break;
+        default:
+            LED_RL_ON();
+            LED_RR_ON();
+            motor_pwm(PWM_LEVEL_3);
+            break;
+        }
+
+        // forward / backward
+//        switch(y_axis)
+//        {
+//        case 0 ... 2125:    // forward
+//            LED_RL_ON();
+//            LED_RR_OFF();
+//            break;
+//        case 2135 ... 4096: // backwards
+//            LED_RL_OFF();
+//            LED_RR_ON();
+//            break;
+//        default:
+//            LED_RL_ON();
+//            LED_RR_ON();
+//            break;
+//        }
+
+        // up / down
+        // doenst work properly. We dont need this
+//        switch(x_axis)
+//        {
+//        case 0 ... 2300:    // stable
+//            LED_RL_ON();
+//            LED_RR_OFF();
+//            break;
+//        case 2310 ... 4096: //
+//            LED_RL_OFF();
+//            LED_RR_ON();
+//            break;
+//        default:
+//            LED_RL_ON();
+//            LED_RR_ON();
+//            break;
+//        }
     }
 
 
-#ifdef I2C
-    I2C_init(0x20>>1);
-    _BIS_SR(GIE);
-    P3DIR &= ~0x04;                            // P3.2 as input
- /* only for ADXL343
-    P3DIR |= 0x09;                            // P3.2 as output for I2C address specification
-    P3OUT &= ~0x08;                           // P3.2 to LOW (for 1101010b of L3GD20H address selection)
-    P3OUT |= 0x01;                            // ADXL343 CS pin to HIGH for I2C enable
-    */
-#endif
 
-
+//#ifdef I2C
+//    I2C_init(0x20>>1);
+//    _BIS_SR(GIE);
+//    P3DIR &= ~0x04;                            // P3.2 as input
+// /* only for ADXL343
+//    P3DIR |= 0x09;                            // P3.2 as output for I2C address specification
+//    P3OUT &= ~0x08;                           // P3.2 to LOW (for 1101010b of L3GD20H address selection)
+//    P3OUT |= 0x01;                            // ADXL343 CS pin to HIGH for I2C enable
+//    */
+//#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////

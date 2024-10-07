@@ -7,7 +7,6 @@ main.obj: /Applications/ti/ccs1280/ccs/ccs_base/msp430/include/in430.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/intrinsics.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/intrinsics_legacy_undefs.h
 main.obj: ../include/timers.h
-main.obj: ../include/SPI.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdint.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/_ti_config.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/linkage.h
@@ -18,6 +17,7 @@ main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/i
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/machine/_types.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/machine/_stdint.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/sys/_stdint.h
+main.obj: ../include/SPI.h
 main.obj: ../include/I2C.h
 main.obj: ../include/LED.h
 main.obj: ../include/ADC.h
@@ -39,8 +39,6 @@ main.obj: ../include/motor.h
 
 ../include/timers.h:
 
-../include/SPI.h:
-
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdint.h:
 
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/_ti_config.h:
@@ -60,6 +58,8 @@ main.obj: ../include/motor.h
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/machine/_stdint.h:
 
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/sys/_stdint.h:
+
+../include/SPI.h:
 
 ../include/I2C.h:
 
