@@ -15,7 +15,6 @@
  * main.c
  */
 
-uint16_t results[5];
 uint16_t i, index;
 // I2C
 uint8_t RX_buffer[I2C_RX_BUFFER_SIZE] = {0};
@@ -34,31 +33,55 @@ int main(void)
     WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
     initClockTo16MHz();         // initialize clock timer 16 MHz
     __bis_SR_register(GIE);     // Enable global interrupts
+    _BIS_SR(GIE);        // some interrupts as well
+
 #ifdef SPI
     uint8_t SPIData;
     SPI_init();
 #endif
+
+    // *** The user code starts here ***
     LED_init();
-//    init_timerA0();
     init_timerB0();
     motor_init();
+    motor_pwm(PWM_LEVEL_2);
+    ADC_init();
+    ADC_start();
 
     // infinite loop
     while (1) {
         if (flag_500ms) {               // Check if flag is set
             LED_FR_toggle();
-            motor_pwm(PWM_LEVEL_1);
+//            motor_pwm(PWM_LEVEL_1);
+
             flag_500ms = 0;             // Clear the flag
         }
         if (flag_1000ms) {
-            LED_FL_toggle();
-            motor_pwm(PWM_LEVEL_2);
+//            LED_FL_toggle();
+//            motor_pwm(PWM_LEVEL_2);
             flag_1000ms = 0;
         }
+
+        // ADC operation
+        // Get the results using the getter function
+        uint16_t x_axis = ADC_get_result(2);
+        uint16_t y_axis = ADC_get_result(3);
+        uint16_t z_axis = ADC_get_result(4);
+
+        if (z_axis < 1950 )
+        {
+            LED_RL_ON();
+            LED_RR_OFF();
+        };
+
+        if (z_axis > 1960 )
+        {
+            LED_RL_OFF();
+            LED_RR_ON();
+        };
     }
 
-  //  ADC_init();
-    _BIS_SR(GIE);
+
 #ifdef I2C
     I2C_init(0x20>>1);
     _BIS_SR(GIE);
@@ -69,9 +92,7 @@ int main(void)
     P3OUT |= 0x01;                            // ADXL343 CS pin to HIGH for I2C enable
     */
 #endif
-    P1DIR |= 0x04;
-    ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
-    P8DIR |= 0b101110;    // H bridge
+
 
 
 
@@ -143,43 +164,6 @@ int main(void)
 //        }
 //        break;                      // Interrupt Vector: I2C Mode: UCRXIFG
 //  case 12: break;                           // Vector 12: TXIFG
-//  default: break;
-//  }
-//}
-//
-//
-//#pragma vector=ADC12_VECTOR
-//__interrupt void ADC12ISR (void)
-//{
-//  switch(__even_in_range(ADC12IV,34))
-//  {
-//  case  0: break;                           // Vector  0:  No interrupt
-//  case  2: break;                           // Vector  2:  ADC overflow
-//  case  4: break;                           // Vector  4:  ADC timing overflow
-//  case  6: break;                           // Vector  6:  ADC12IFG0
-//  case  8: break;                           // Vector  8:  ADC12IFG1
-//  case 10: break;                           // Vector 10:  ADC12IFG2
-//  case 12: break;                            // Vector 12:  ADC12IFG3
-//  case 14: break;                           // Vector 14:  ADC12IFG4
-//  case 16: break;                           // Vector 16:  ADC12IFG5
-//  case 18: break;                           // Vector 18:  ADC12IFG6
-//  case 20:                            // Vector 20:  ADC12IFG7
-//      LED_FL_ON();
-//      ADC12CTL0 &=~ADC12SC;                // For sequence-of-Channels mode, ADC12SC must be cleared by software after each sequence to trigger another sequence
-//      results[0] = ADC12MEM3;                 // Move results, IFG is cleared
-//      results[1] = ADC12MEM4;                 // Move results, IFG is cleared
-//      results[2] = ADC12MEM5;                 // Move results, IFG is cleared
-//      results[3] = ADC12MEM6;                 // Move results, IFG is cleared
-//      results[4] = ADC12MEM7;                 // Move results, IFG is cleared
-//      LED_FL_OFF();
-//      ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
-//  case 22: break;                           // Vector 22:  ADC12IFG8
-//  case 24: break;                           // Vector 24:  ADC12IFG9
-//  case 26: break;                           // Vector 26:  ADC12IFG10
-//  case 28: break;                           // Vector 28:  ADC12IFG11
-//  case 30: break;                           // Vector 30:  ADC12IFG12
-//  case 32: break;                           // Vector 32:  ADC12IFG13
-//  case 34: break;                           // Vector 34:  ADC12IFG14
 //  default: break;
 //  }
 //}
