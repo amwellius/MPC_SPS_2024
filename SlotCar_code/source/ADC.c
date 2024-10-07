@@ -68,9 +68,9 @@ __interrupt void ADC12ISR (void)
       ADC12CTL0 &=~ADC12SC;                // For sequence-of-Channels mode, ADC12SC must be cleared by software after each sequence to trigger another sequence
       results[0] = ADC12MEM3;                 // Move results, IFG is cleared
       results[1] = ADC12MEM4;                 // Move results, IFG is cleared
-      results[2] = ADC12MEM5;                 // Move results, IFG is cleared // X (forward-backward)
-      results[3] = ADC12MEM6;                 // Move results, IFG is cleared // Y (side-side)
-      results[4] = ADC12MEM7;                 // Move results, IFG is cleared // Z (up-down)
+      results[2] = ADC12MEM5;                 // Move results, IFG is cleared // X ()
+      results[3] = ADC12MEM6;                 // Move results, IFG is cleared // Y (forward-backward)
+      results[4] = ADC12MEM7;                 // Move results, IFG is cleared // Z (left-right)
 //      LED_FL_OFF();
       ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
       __bic_SR_register_on_exit(LPM0_bits);   // exit low power mode if entered
