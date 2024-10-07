@@ -9,8 +9,8 @@
 #include <msp430.h>
 
 // Variables
-volatile unsigned int overflow_count1 = 0;      // Define overflow_count1
-volatile unsigned int overflow_count2 = 0;      // Define overflow_count2
+volatile uint8_t overflow_count1 = 0;      // Define overflow_count1
+volatile uint8_t overflow_count2 = 0;      // Define overflow_count2
 volatile unsigned char flag_500ms = 0;          // Define flag_500ms
 volatile unsigned char flag_1000ms = 0;          // Define flag_1000ms
 
@@ -52,7 +52,7 @@ void initClockTo16MHz()
  0%   = forward full speed
  100% = reverse full speed
 */
-void init_timerA0(unsigned int duty_cycle)
+void init_timerA0(uint16_t duty_cycle)
 {
     P8DIR |= BIT2;                     // Set P8.2 as output for PWM signal (TA0.2)
     P8SEL |= BIT2;                     // Select Timer_A function for P8.2
