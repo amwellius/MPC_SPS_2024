@@ -1,8 +1,8 @@
 /*
  * ADC.h
  *
- *  Created on: 24. 9. 2020
- *      Author: dosedel
+ *  Created on: 07/October/2024
+ *      Author: xkosik09
  */
 
 #ifndef ADC_H_
@@ -16,6 +16,9 @@
 
 // functions prototypes
 void ADC_init(void);
+void ADC_start(void);
+uint16_t ADC_get_result(uint8_t index);  // Declare the getter
+
 
 // variables
 
