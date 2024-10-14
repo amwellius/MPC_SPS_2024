@@ -15,6 +15,8 @@
 // Variables
 extern volatile uint8_t overflow_count1;         // Declare overflow_count1 as extern
 extern volatile uint8_t overflow_count2;         // Declare overflow_count2 as extern
+extern volatile uint8_t overflow_count3;         // Declare overflow_count2 as extern
+extern volatile unsigned char flag_62ms;         // Declare flag_62.5ms as extern
 extern volatile unsigned char flag_500ms;        // Declare flag_500ms as extern
 extern volatile unsigned char flag_1000ms;       // Declare flag_1000ms as extern
 

@@ -11,12 +11,15 @@
 // Variables
 volatile uint8_t overflow_count1 = 0;      // Define overflow_count1
 volatile uint8_t overflow_count2 = 0;      // Define overflow_count2
-volatile unsigned char flag_500ms = 0;          // Define flag_500ms
-volatile unsigned char flag_1000ms = 0;          // Define flag_1000ms
+volatile uint8_t overflow_count3 = 0;      // Define overflow_count3
+volatile unsigned char flag_62ms = 0;      // Define flag_62.5ms
+volatile unsigned char flag_500ms = 0;     // Define flag_500ms
+volatile unsigned char flag_1000ms = 0;    // Define flag_1000ms
 
 // Definitions
-#define half_sec    16  // 16 = Approximately 0.5 seconds
-#define one_sec     32  // 32 = Approximately 1 seconds
+#define sixtytwo_msec   2   // 2 =  Approximately 62.5 miliseconds
+#define half_sec        16  // 16 = Approximately 0.5 seconds
+#define one_sec         32  // 32 = Approximately 1 seconds
 
 
 // main clock 16 MHz
@@ -88,6 +91,7 @@ __interrupt void Timer_B0(void)
 {
     overflow_count1++;                   // Increment overflow counter 1
     overflow_count2++;                   // Increment overflow counter 2
+    overflow_count3++;                   // Increment overflow counter 2
     if (overflow_count1 >= half_sec) {
         flag_500ms = 1;                 // Set flag for 0.5 sec
         overflow_count1 = 0;             // Reset counter
@@ -95,6 +99,10 @@ __interrupt void Timer_B0(void)
     if (overflow_count2 >= one_sec) {
         flag_1000ms = 1;                 // Set flag for 1 sec
         overflow_count2 = 0;             // Reset counter
+    }
+    if (overflow_count3 >= sixtytwo_msec ) {
+        flag_62ms = 1;                 // Set flag for 0.5 sec
+        overflow_count3 = 0;             // Reset counter
     }
 
 }
