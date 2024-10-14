@@ -24,6 +24,7 @@ main.obj: ../include/ADC.h
 main.obj: ../include/L3GD20H.h
 main.obj: ../include/ADXL343.h
 main.obj: ../include/motor.h
+main.obj: ../include/UART.h
 
 ../main.c:
 
@@ -72,4 +73,6 @@ main.obj: ../include/motor.h
 ../include/ADXL343.h:
 
 ../include/motor.h:
+
+../include/UART.h:
 

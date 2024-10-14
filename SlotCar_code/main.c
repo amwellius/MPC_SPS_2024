@@ -7,6 +7,7 @@
 #include "include/L3GD20H.h"
 #include "include/ADXL343.h"
 #include "include/motor.h"
+#include "include/UART.h"
 
 //#define SPI
 //#define I2C
@@ -48,6 +49,7 @@ int main(void)
 
     ADC_init();
     ADC_start();
+    UART_init();
 
     // infinite loop
     while (1) {
@@ -89,6 +91,10 @@ int main(void)
                 motor_pwm(PWM_LEVEL_6);
                 break;
             }
+
+            // odesilani dat
+//            UCA1TXBUF = z_axis;   // data jsou ihned po vlozeni do UCAxTXBUF odeslana na seriovou branu
+            UCA1TXBUF = 77;
 
             flag_62ms = 0;
         }
@@ -218,5 +224,7 @@ int main(void)
 //}
 
 //**********************************************************************************************
+
+
 
 

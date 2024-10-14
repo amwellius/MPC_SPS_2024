@@ -3,6 +3,7 @@
 "./source/I2C.obj"
 "./source/LED.obj"
 "./source/SPI.obj"
+"./source/UART.obj"
 "./source/motor.obj"
 "./source/timers.obj"
 "../lnk_msp430f5437a.cmd"
