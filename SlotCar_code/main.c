@@ -52,7 +52,7 @@ int main(void)
     // infinite loop
     while (1) {
         if (flag_500ms) {               // Check if flag is set
-            LED_FR_toggle();
+//            LED_FR_toggle();
 //            motor_pwm(PWM_LEVEL_1);
 
             flag_500ms = 0;             // Clear the flag
@@ -62,32 +62,38 @@ int main(void)
 //            motor_pwm(PWM_LEVEL_2);
             flag_1000ms = 0;
         }
+        if (flag_62ms) {
+            LED_FR_toggle();
+            // ADC operation
+            // Get the results using the getter function
+            uint16_t x_axis = ADC_get_result(2);
+            uint16_t y_axis = ADC_get_result(3);
+            uint16_t z_axis = ADC_get_result(4);
 
-        // ADC operation
-        // Get the results using the getter function
-        uint16_t x_axis = ADC_get_result(2);
-        uint16_t y_axis = ADC_get_result(3);
-        uint16_t z_axis = ADC_get_result(4);
+            // left / right
+            switch(z_axis)
+            {
+            case 0 ... 1952:    // left
+                LED_RL_ON();
+                LED_RR_OFF();
+                motor_pwm(PWM_LEVEL_4);
+                break;
+            case 1962 ... 4096: // right
+                LED_RL_OFF();
+                LED_RR_ON();
+                motor_pwm(PWM_LEVEL_4);
+                break;
+            default:
+                LED_RL_ON();
+                LED_RR_ON();
+                motor_pwm(PWM_LEVEL_6);
+                break;
+            }
 
-        // left / right
-        switch(z_axis)
-        {
-        case 0 ... 1945:    // left
-            LED_RL_ON();
-            LED_RR_OFF();
-            motor_pwm(PWM_LEVEL_2);
-            break;
-        case 1965 ... 4096: // right
-            LED_RL_OFF();
-            LED_RR_ON();
-            motor_pwm(PWM_LEVEL_2);
-            break;
-        default:
-            LED_RL_ON();
-            LED_RR_ON();
-            motor_pwm(PWM_LEVEL_3);
-            break;
+            flag_62ms = 0;
         }
+
+
 
         // forward / backward
 //        switch(y_axis)
