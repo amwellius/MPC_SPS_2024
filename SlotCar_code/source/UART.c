@@ -8,6 +8,8 @@
 
 #include "include/UART.h"
 
+volatile uint8_t povol_TX;
+
 void UART_init(void)
 {
     UCA1CTL1 = UCSWRST; //UCA1 softwarovy reset -> ON
@@ -37,7 +39,7 @@ void UART_init(void)
 #pragma vector = USCI_A1_VECTOR
 __interrupt void USCI_A1_ISR(void) {
     unsigned char RX_data;
-    uint8_t povol_TX;
+
 
     switch(__even_in_range(UCA1IV,4))
     {

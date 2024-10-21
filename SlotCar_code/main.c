@@ -51,26 +51,19 @@ int main(void)
     ADC_start();
     UART_init();
 
+    uint16_t x_axis = 0;
+    uint16_t y_axis = 0;
+    uint16_t z_axis = 0;
+
     // infinite loop
     while (1) {
-        if (flag_500ms) {               // Check if flag is set
-//            LED_FR_toggle();
-//            motor_pwm(PWM_LEVEL_1);
-
-            flag_500ms = 0;             // Clear the flag
-        }
-        if (flag_1000ms) {
-            LED_FL_toggle();
-//            motor_pwm(PWM_LEVEL_2);
-            flag_1000ms = 0;
-        }
         if (flag_62ms) {
             LED_FR_toggle();
             // ADC operation
             // Get the results using the getter function
-            uint16_t x_axis = ADC_get_result(2);
-            uint16_t y_axis = ADC_get_result(3);
-            uint16_t z_axis = ADC_get_result(4);
+            x_axis = ADC_get_result(2);
+            y_axis = ADC_get_result(3);
+            z_axis = ADC_get_result(4);
 
             // left / right
             switch(z_axis)
@@ -86,18 +79,41 @@ int main(void)
                 motor_pwm(PWM_LEVEL_4);
                 break;
             default:
-                LED_RL_ON();
-                LED_RR_ON();
+                LED_RL_OFF();
+                LED_RR_OFF();
                 motor_pwm(PWM_LEVEL_6);
                 break;
             }
-
-            // odesilani dat
-//            UCA1TXBUF = z_axis;   // data jsou ihned po vlozeni do UCAxTXBUF odeslana na seriovou branu
-            UCA1TXBUF = 77;
-
             flag_62ms = 0;
         }
+
+        if (flag_500ms) {               // Check if flag is set
+//            LED_FR_toggle();
+//            motor_pwm(PWM_LEVEL_1);
+            flag_500ms = 0;             // Clear the flag
+        }
+
+        if (flag_1000ms) {
+            LED_FL_toggle();
+//            motor_pwm(PWM_LEVEL_2);
+
+            // Sending data BLUETOOTH
+            if (povol_TX == 1)
+            {
+                UCA1TXBUF = z_axis;   // data jsou ihned po vlozeni do UCAxTXBUF odeslana na seriovou branu
+//                UCA1TXBUF = 77; // test letter M ASCII
+
+                /*
+                 * clean up the code - create aux.c file?
+                 * ADC better range
+                 * look into command line
+                 *
+                 */
+            }
+
+            flag_1000ms = 0;
+        }
+
 
 
 

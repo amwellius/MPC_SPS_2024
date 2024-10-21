@@ -13,5 +13,7 @@
 
 void UART_init(void);     //initialization and initiation communication -- default baud rate is 19600
 
+extern volatile uint8_t povol_TX;
+
 
 #endif /* UART_H_ */
