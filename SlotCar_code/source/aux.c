@@ -6,14 +6,99 @@
  */
 
 // INCLUDES
-#include "include/aux.h"
 #include <msp430.h>
+#include "include/timers.h"
+#include "include/aux.h"
+#include "include/ADC.h"
+#include "include/motor.h"
+#include "include/LED.h"
 
 // VARIABLES
 
 // DEFINITIONS
+#define axis_enable_z // set z y x for axis to be enabled for ADC motor control
 
 // FUNCTIONS
+/*
+ * Function for very simple controlling of the car speed according to the data from the ADC.
+ * The ADC data is processed every ~62.5ms
+ */
+void car_control_simple(void)
+{
+    uint16_t x_axis = 0;
+    uint16_t y_axis = 0;
+    uint16_t z_axis = 0;
+
+    if (flag_62ms)
+    {
+        LED_FR_toggle();
+        // ADC operation
+        // Get the results using the getter function
+        x_axis = ADC_get_result(2);
+        y_axis = ADC_get_result(3);
+        z_axis = ADC_get_result(4);
+
+        // left / right
+    #ifdef axis_enable_z
+        switch(z_axis)
+        {
+        case 0 ... 1952:    // left
+            LED_RL_ON();
+            LED_RR_OFF();
+            motor_pwm(PWM_LEVEL_4);
+            break;
+        case 1962 ... 4096: // right
+            LED_RL_OFF();
+            LED_RR_ON();
+            motor_pwm(PWM_LEVEL_4);
+            break;
+        default:
+            LED_RL_OFF();
+            LED_RR_OFF();
+            motor_pwm(PWM_LEVEL_6);
+            break;
+        }
+
+        // forward / backward
+    #elif defined(axis_enable_y)
+        switch(y_axis)
+        {
+        case 0 ... 2125:    // forward
+            LED_RL_ON();
+            LED_RR_OFF();
+            break;
+        case 2135 ... 4096: // backwards
+            LED_RL_OFF();
+            LED_RR_ON();
+            break;
+        default:
+            LED_RL_ON();
+            LED_RR_ON();
+            break;
+        }
+    #elif defined(axis_enable_x)
+        // up / down
+        // doesnt work properly. We dont need this
+        switch(x_axis)
+        {
+        case 0 ... 2300:    // stable
+            LED_RL_ON();
+            LED_RR_OFF();
+            break;
+        case 2310 ... 4096: //
+            LED_RL_OFF();
+            LED_RR_ON();
+            break;
+        default:
+            LED_RL_ON();
+            LED_RR_ON();
+            break;
+        }
+    #endif
+
+        flag_62ms = 0;
+    }
+}
 
 
 

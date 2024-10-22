@@ -16,5 +16,6 @@
 // VARIABLES
 
 // FUNCTIONS
+void car_control_simple(void);
 
 #endif /* AUX_H_ */
