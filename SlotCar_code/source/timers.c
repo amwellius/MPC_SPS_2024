@@ -5,10 +5,11 @@
  *      Author: xkosik09
  */
 
+// INCLUDES
 #include "include/timers.h"
 #include <msp430.h>
 
-// Variables
+// VARIABLES
 volatile uint8_t overflow_count1 = 0;      // Define overflow_count1
 volatile uint8_t overflow_count2 = 0;      // Define overflow_count2
 volatile uint8_t overflow_count3 = 0;      // Define overflow_count3
@@ -16,7 +17,7 @@ volatile unsigned char flag_62ms = 0;      // Define flag_62.5ms
 volatile unsigned char flag_500ms = 0;     // Define flag_500ms
 volatile unsigned char flag_1000ms = 0;    // Define flag_1000ms
 
-// Definitions
+// DEFINITIONS
 #define sixtytwo_msec   2   // 2 =  Approximately 62.5 miliseconds
 #define half_sec        16  // 16 = Approximately 0.5 seconds
 #define one_sec         32  // 32 = Approximately 1 seconds
@@ -82,8 +83,8 @@ void init_timerB0(void)
 
 
 
-// ***************************************************************************** //
-// INTERUPTS
+// **************************************INTERUPTS************************************** //
+
 
 // Interrupt of Timer B0
 #pragma vector = TIMER0_B0_VECTOR

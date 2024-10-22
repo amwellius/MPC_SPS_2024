@@ -8,10 +8,11 @@
 #ifndef LED_H_
 #define LED_H_
 
-
+// INCLUDES
 #include "stdint.h"
 #include <msp430.h>
-// macros definition
+
+// DEFINITIONS
 // LED ports definition
 #define LED_FL_PORT  P1OUT
 #define LED_FR_PORT  P1OUT
@@ -44,12 +45,9 @@
 #define LED_RR_toggle() (LED_RR_PORT ^= LED_RR_PIN)
 #define LED_RR_OFF()    (LED_RR_PORT &= ~LED_RR_PIN)
 
-
-// functions prototypes
+// FUNCTIONS
 void LED_init(void);
 void led_flash_all(uint8_t const n); // number of flashes
-
-// variables
 
 
 #endif /* LED_H_ */

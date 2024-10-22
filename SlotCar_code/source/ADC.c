@@ -7,13 +7,14 @@
  *      Author: xkosik09
  */
 
+// INCLUDES
 #include "include/ADC.h"
 #include <msp430.h>
 
-
-// Variables
+// VARIABLES
 uint16_t results[5];  // Define the array
 
+// FUNCTIONS
 void ADC_init(void)
 {
     P6SEL |= 0xF8;      // P6.3 - P6.7 as ADC
@@ -46,8 +47,7 @@ uint16_t ADC_get_result(uint8_t index)
 }
 
 
-// ***************************************************************************** //
-// INTERUPTS
+// **************************************INTERUPTS************************************** //
 #pragma vector=ADC12_VECTOR
 __interrupt void ADC12ISR (void)
 {
@@ -68,7 +68,7 @@ __interrupt void ADC12ISR (void)
       ADC12CTL0 &=~ADC12SC;                // For sequence-of-Channels mode, ADC12SC must be cleared by software after each sequence to trigger another sequence
       results[0] = ADC12MEM3;                 // Move results, IFG is cleared
       results[1] = ADC12MEM4;                 // Move results, IFG is cleared
-      results[2] = ADC12MEM5;                 // Move results, IFG is cleared // X ()
+      results[2] = ADC12MEM5;                 // Move results, IFG is cleared // X (up / down)
       results[3] = ADC12MEM6;                 // Move results, IFG is cleared // Y (forward-backward)
       results[4] = ADC12MEM7;                 // Move results, IFG is cleared // Z (left-right)
 //      LED_FL_OFF();

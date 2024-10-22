@@ -5,8 +5,10 @@
  *      Author: xkosik09
  */
 
+// INCLUDES
 #include "include/LED.h"
 
+// FUNCTIONS
 void LED_init(void)
 {
     P1DIR |= 0x0C;  //  P1.2 and P1.3 as output

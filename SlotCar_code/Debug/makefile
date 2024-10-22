@@ -14,6 +14,7 @@ ORDERED_OBJS += \
 "./source/LED.obj" \
 "./source/SPI.obj" \
 "./source/UART.obj" \
+"./source/aux.obj" \
 "./source/motor.obj" \
 "./source/timers.obj" \
 "../lnk_msp430f5437a.cmd" \
@@ -149,8 +150,8 @@ SlotCar_code.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 # Other Targets
 clean:
 	-$(RM) $(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj" "source/ADC.obj" "source/I2C.obj" "source/LED.obj" "source/SPI.obj" "source/UART.obj" "source/motor.obj" "source/timers.obj" 
-	-$(RM) "main.d" "source/ADC.d" "source/I2C.d" "source/LED.d" "source/SPI.d" "source/UART.d" "source/motor.d" "source/timers.d" 
+	-$(RM) "main.obj" "source/ADC.obj" "source/I2C.obj" "source/LED.obj" "source/SPI.obj" "source/UART.obj" "source/aux.obj" "source/motor.obj" "source/timers.obj" 
+	-$(RM) "main.d" "source/ADC.d" "source/I2C.d" "source/LED.d" "source/SPI.d" "source/UART.d" "source/aux.d" "source/motor.d" "source/timers.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

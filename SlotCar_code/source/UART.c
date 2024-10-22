@@ -5,11 +5,13 @@
  *      Author: 
  */
 
-
+// INCLUDES
 #include "include/UART.h"
 
+// VARIABLES
 volatile uint8_t povol_TX;
 
+// FUNCTIONS
 void UART_init(void)
 {
     UCA1CTL1 = UCSWRST; //UCA1 softwarovy reset -> ON
@@ -35,7 +37,7 @@ void UART_init(void)
 }
 
 
-// preruseni pro prijem dat
+// **************************************INTERUPTS************************************** //
 #pragma vector = USCI_A1_VECTOR
 __interrupt void USCI_A1_ISR(void) {
     unsigned char RX_data;

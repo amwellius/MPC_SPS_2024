@@ -8,14 +8,16 @@
 #ifndef MOTOR_H_
 #define MOTOR_H_
 
+// INCLUDES
 #include <msp430.h>
-// macros definition
+
+// DEFINITIONS
 #define H_BRAKE_PORT     P8OUT  // P8.5/TA1.0
 #define H_STATUS_PORT    P8IN   // P8.4/TA0.4  INPUT PORT
 #define H_DIRECTION_PORT P8OUT  // P8.2/TA0.2
 #define H_IN_PORT        P8OUT  // P8.3/TA0.3
 
-// functions prototypes
+// PINS
 #define H_BRAKE_PIN     0x20    // pin driven low by the H_BRIDGE in case of Vfault
 #define H_STATUS_PIN    0x10    // status pin = gives fault info
 #define H_DIRECTION_PIN 0x04
@@ -30,7 +32,7 @@
 #define H_DIRECTION_l   (H_DIRECTION_PORT |= H_DIRECTION_PIN)   // reversed h and l (dont know why but it works this way)
 #define H_DIRECTION_h   (H_DIRECTION_PORT &= ~H_DIRECTION_PIN)  // reversed h and l (dont know why but it works this way)
 
-// variables
+// VARIABLES
 typedef enum {
     PWM_LEVEL_1  = 300, // 25%
     PWM_LEVEL_2  = 280, // 30%
