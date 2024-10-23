@@ -10,33 +10,12 @@
 #include <msp430.h>
 
 // VARIABLES
-//volatile uint8_t    overflow_count1 = 0;        // Define overflow_count1
-//volatile uint8_t    overflow_count2 = 0;        // Define overflow_count2
-//volatile uint8_t    overflow_count3 = 0;        // Define overflow_count3
-//volatile uint8_t    overflow_count4 = 0;        // Define overflow_count4
-//volatile uint8_t    overflow_count5 = 0;        // Define overflow_count5
-//volatile uint16_t   overflow_count6 = 0;        // Define overflow_count6
-//volatile uint16_t   variable_ms     = 0;        // Define variable_ms
 volatile unsigned char flag_1ms = 0;            // Define flag_1ms
 volatile unsigned char flag_31ms = 0;           // Define flag_31.75ms
 volatile unsigned char flag_62ms = 0;           // Define flag_62.5ms
 volatile unsigned char flag_500ms = 0;          // Define flag_500ms
 volatile unsigned char flag_1000ms = 0;         // Define flag_1000ms
-volatile unsigned char flag_variable_ms = 0;    // Define flag_1000ms
-
-#define MAX_DELAYS 10 // Define maximum delays
-static uint16_t variable_ms[MAX_DELAYS] = {0}; // Array to store delay intervals
-static uint16_t reference_count[MAX_DELAYS] = {0}; // Array to store last reference counts
-static uint16_t overflow_count6 = 0; // Incremented every 1 ms
-
-
-// DEFINITIONS
-#define one_ms          1   // 1 =  Approximately 1 milisecond
-#define thirdy_one_msec 1   // 1  = Approximately 31.75 miliseconds
-#define sixtytwo_msec   2   // 2  = Approximately 62.5 miliseconds
-#define half_sec        16  // 16 = Approximately 0.5 seconds
-#define one_sec         32  // 32 = Approximately 1 seconds
-
+static uint16_t overflow_count5 = 0;            // Incremented every 1 ms
 
 /* main clock 16 MHz
  * This function doesn’t set up the timer directly but ensures your system clock is running at 16 MHz.
@@ -106,21 +85,37 @@ void init_timerA1(void)
     TA1CCTL0 |= CCIE;                // Enable Timer A1 interrupt
 }
 
+/*
+ * Function to set variable delays
+ * Usage of this variable delay function:
+ *
+ *  if (variable_delay_ms(1, 100)) {
+ *      // Perform another task every 100 ms
+ *      LED_FR_toggle(); // Example task
+ *  }
+ *
+ *  if (variable_delay_ms(1, 300)) {
+ *      // Perform another task every 300 ms
+ *      LED_FR_toggle(); // Example task
+ *  }
+ */
+bool variable_delay_ms(uint8_t index, uint16_t delay_ms)
+{
+    static uint16_t variable_ms[max_variable_delays] = {0};          // Array to store delay intervals
+    static uint16_t reference_count[max_variable_delays] = {0};      // Array to store last reference counts
 
-// Function to set variable delays
-bool variable_delay_ms(uint8_t index, uint16_t delay_ms) {
-    if (index >= MAX_DELAYS) return false; // Ensure index is valid
+    if (index >= max_variable_delays) return false; // Ensure index is valid
 
     // Update the delay if it's different from the stored value
     if (variable_ms[index] != delay_ms) {
         variable_ms[index] = delay_ms; // Update the delay
-        reference_count[index] = overflow_count6; // Set reference count to current
+        reference_count[index] = overflow_count5; // Set reference count to current
         return false; // Return false if a new delay is set
     }
 
     // Check if the specified delay has elapsed
-    if ((overflow_count6 - reference_count[index]) >= delay_ms) {
-        reference_count[index] = overflow_count6; // Update reference count to current
+    if ((overflow_count5 - reference_count[index]) >= delay_ms) {
+        reference_count[index] = overflow_count5; // Update reference count to current
         return true; // Delay elapsed
     }
 
@@ -139,12 +134,13 @@ __interrupt void Timer_B0(void)
     static uint8_t overflow_count1 = 0;        // Define overflow_count1
     static uint8_t overflow_count2 = 0;        // Define overflow_count2
     static uint8_t overflow_count3 = 0;        // Define overflow_count3
-    static uint8_t overflow_count5 = 0;        // Define overflow_count5
+    static uint8_t overflow_count4 = 0;        // Define overflow_count4
 
     overflow_count1++;                      // Increment overflow counter 1
     overflow_count2++;                      // Increment overflow counter 2
     overflow_count3++;                      // Increment overflow counter 3
-    overflow_count5++;                      // Increment overflow counter 5
+    overflow_count4++;                      // Increment overflow counter 4
+
     if (overflow_count1 >= half_sec) {
         flag_500ms = 1;                     // Set flag for 0.5 sec
         overflow_count1 = 0;                // Reset counter
@@ -157,9 +153,9 @@ __interrupt void Timer_B0(void)
         flag_62ms = 1;                      // Set flag for ~62.5 ms
         overflow_count3 = 0;                // Reset counter
     }
-    if (overflow_count5 >= thirdy_one_msec ) {
+    if (overflow_count4 >= thirdy_one_msec ) {
         flag_31ms = 1;                      // Set flag for ~31.75 ms
-        overflow_count5 = 0;                // Reset counter
+        overflow_count4 = 0;                // Reset counter
     }
 
 }
@@ -168,18 +164,14 @@ __interrupt void Timer_B0(void)
 #pragma vector = TIMER1_A0_VECTOR
 __interrupt void Timer_A1(void)
 {
-    static uint8_t  overflow_count4 = 0;        // Define overflow_count4
-//    static uint16_t overflow_count6 = 0;        // Define overflow_count6
+    static uint8_t  overflow_count6 = 0; // Define overflow_count4
 
-    overflow_count4++;                   // Increment overflow counter 4
+    overflow_count5++;                   // Increment overflow counter 5 every 1ms for the various delay function
     overflow_count6++;                   // Increment overflow counter 6
-//    if (overflow_count6 >= variable_ms) {
-//        flag_variable_ms = 1;            // Set flag for variable ms
-//        overflow_count6 = 0;             // Reset counter
-//    }
-    if (overflow_count4 >= one_ms) {
+
+    if (overflow_count6 >= one_ms) {
         flag_1ms = 1;                    // Set flag for 1 ms
-        overflow_count4 = 0;             // Reset counter
+        overflow_count6 = 0;             // Reset counter
     }
 }
 

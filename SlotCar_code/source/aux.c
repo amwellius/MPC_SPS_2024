@@ -16,9 +16,6 @@
 
 // VARIABLES
 
-// DEFINITIONS
-#define axis_enable_z // set z y x for axis to be enabled for ADC motor control
-
 // FUNCTIONS
 
 /*

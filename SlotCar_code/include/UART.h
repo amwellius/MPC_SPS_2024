@@ -13,6 +13,8 @@
 #include "stdint.h"
 #include <msp430.h>
 
+// DEFINITIONS
+
 // VARIABLES
 extern volatile uint8_t povol_TX;
 

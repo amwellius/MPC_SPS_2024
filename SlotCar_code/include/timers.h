@@ -13,21 +13,20 @@
 #include "stdint.h"
 #include <stdbool.h>
 
+// DEFINITIONS
+#define one_ms              1   // 1 =  Approximately 1 milisecond
+#define thirdy_one_msec     1   // 1  = Approximately 31.75 miliseconds
+#define sixtytwo_msec       2   // 2  = Approximately 62.5 miliseconds
+#define half_sec            16  // 16 = Approximately 0.5 seconds
+#define one_sec             32  // 32 = Approximately 1 seconds
+#define max_variable_delays 10  // Define maximum delays for the variable delay function
+
 // VARIABLES
-//extern volatile uint8_t overflow_count1;         // Declare overflow_count1 as extern
-//extern volatile uint8_t overflow_count2;         // Declare overflow_count2 as extern
-//extern volatile uint8_t overflow_count3;         // Declare overflow_count3 as extern
-//extern volatile uint8_t overflow_count4;         // Declare overflow_count4 as extern
-//extern volatile uint8_t overflow_count5;         // Declare overflow_count5 as extern
-//extern volatile uint16_t variable_ms;            // Declare variable_ms
 extern volatile unsigned char flag_1ms;          // Declare flag_1ms as extern
 extern volatile unsigned char flag_31ms;         // Declare flag_31.75ms as extern
 extern volatile unsigned char flag_62ms;         // Declare flag_62.5ms as extern
 extern volatile unsigned char flag_500ms;        // Declare flag_500ms as extern
 extern volatile unsigned char flag_1000ms;       // Declare flag_1000ms as extern
-extern volatile unsigned char flag_variable_ms;  // Declare flag_variable_ms as extern
-
-//extern volatile uint16_t overflow_count6;
 
 // FUNCTIONS
 void initClockTo16MHz(void);                      // main clock 16MHz
@@ -35,6 +34,6 @@ void init_timerA0(uint16_t duty_cycle);           // timer A, instance 0 for PWM
 void init_timerA1(void);                          // timer A, instance 1 for precise timed interrupts ~1ms+
 void init_timerB0(void);                          // timer B, instance 0 for precise timed interrupts ~31ms+
 
-bool variable_delay_ms(uint8_t index, uint16_t delay_ms);
+bool variable_delay_ms(uint8_t index, uint16_t delay_ms); // variable delay in ms; index of delay; delay in ms
 
 #endif /* LED_H_ */

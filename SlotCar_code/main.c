@@ -44,12 +44,12 @@ int main(void)
         car_control_simple();
 
         if (variable_delay_ms(0, 100)) {
-            // Perform task every 100 ms
+            // Perform task every xxx ms
             LED_FL_toggle(); // Example task
         }
 
         if (variable_delay_ms(1, 300)) {
-            // Perform another task every 200 ms
+            // Perform another task every xxx ms
             LED_FR_toggle(); // Example task
         }
 
