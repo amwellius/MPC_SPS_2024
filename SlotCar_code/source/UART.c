@@ -7,11 +7,16 @@
 
 // INCLUDES
 #include "include/UART.h"
+#include <stdio.h>  // Include for sprintf
 
 // VARIABLES
 volatile uint8_t povol_TX;
 
 // FUNCTIONS
+
+/*
+ * UART Bluetooth module init function to set it up
+ */
 void UART_init(void)
 {
     UCA1CTL1 = UCSWRST; //UCA1 softwarovy reset -> ON
@@ -35,7 +40,41 @@ void UART_init(void)
 
    UCA1IE |= UCRXIE;         //Enable USCI_A1 RX interrupt
 }
+/*
+ * Send char data over Bluetooth
+ */
+void ble_send(const char *data) {
+    while (*data) {
+        while (!(UCA1IFG & UCTXIFG));  // Wait for the transmit buffer to be ready
+        UCA1TXBUF = *data;             // Send the current character
+        data++;                        // Move to the next character
+    }
+}
 
+/*
+ * Send uint16_t data over Bluetooth
+ */
+void ble_send_uint16(uint16_t number) {
+    char buffer[6];  // Buffer to hold ASCII string (max 5 digits + null terminator)
+    int i = 0;
+
+    // Handle 0 case explicitly
+    if (number == 0) {
+        ble_send("0");
+        return;
+    }
+
+    // Extract digits from the number (from least significant to most significant)
+    while (number > 0) {
+        buffer[i++] = (number % 10) + '0';  // Convert digit to ASCII
+        number /= 10;
+    }
+
+    // Reverse and send the digits since they were stored in reverse
+    while (i > 0) {
+        ble_send((char[]){buffer[--i], '\0'});  // Send one digit at a time
+    }
+}
 
 // **************************************INTERUPTS************************************** //
 #pragma vector = USCI_A1_VECTOR

@@ -17,6 +17,8 @@
 extern volatile uint8_t povol_TX;
 
 // FUNCTIONS
-void UART_init(void);     //initialization and initiation communication -- default baud rate is 19600
+void UART_init(void);                       // initialization and initiation communication -- default baud rate is 19600
+void ble_send(const char *data);            // send char data
+void ble_send_uint16(uint16_t number);      // send uint16_t data
 
 #endif /* UART_H_ */
