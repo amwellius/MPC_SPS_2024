@@ -16,9 +16,6 @@
 #include "include/aux.h"
 
 // VARIABLES
-//uint16_t i, index;
-
-
 
 // MAIN LOOP
 int main(void)
@@ -27,43 +24,59 @@ int main(void)
     initClockTo16MHz();         // initialize clock timer 16 MHz
     __bis_SR_register(GIE);     // Enable global interrupts
     _BIS_SR(GIE);        // some interrupts as well
+    __enable_interrupt();
 
 
     LED_init();
     init_timerB0();
+    init_timerA1();
     motor_init();
     ADC_init();
     ADC_start();
     UART_init();
 
-
-
     // infinite loop
     while (1) {
+
+//        delay_ms(200);
+//        LED_FL_toggle();
+
         car_control_simple();
 
+        if (variable_delay_ms(0, 100)) {
+            // Perform task every 100 ms
+            LED_FL_toggle(); // Example task
+        }
 
+        if (variable_delay_ms(1, 300)) {
+            // Perform another task every 200 ms
+            LED_FR_toggle(); // Example task
+        }
+
+
+
+        // 1ms interrupt
+        if (flag_1ms) {               // Check if flag is set
+            flag_1ms = 0;             // Clear the flag
+        }
+
+        // 31.75ms interrupt
+        if (flag_31ms) {               // Check if flag is set
+//            LED_FL_toggle();
+            flag_31ms = 0;             // Clear the flag
+        }
+
+        // 500ms interrupt
         if (flag_500ms) {               // Check if flag is set
-//            LED_FR_toggle();
+//            ble_send("Every 500ms\n");
             flag_500ms = 0;             // Clear the flag
         }
 
+        // 1000ms interrupt
         if (flag_1000ms) {
-            LED_FL_toggle();
-
-            // Sending data BLUETOOTH
-//            if (povol_TX == 1)
-//            {
-//                UCA1TXBUF = z_axis;   // data jsou ihned po vlozeni do UCAxTXBUF odeslana na seriovou branu
-////                UCA1TXBUF = 77; // test letter M ASCII
-//
-//                /*
-//                 * clean up the code - create aux.c file?
-//                 * ADC better range
-//                 * look into command line
-//                 *
-//                 */
-//            }
+            if (povol_TX == 1)
+            {
+            }
 
             flag_1000ms = 0;
         }

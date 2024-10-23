@@ -18,6 +18,7 @@ source/motor.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6
 source/motor.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/machine/_types.h
 source/motor.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/machine/_stdint.h
 source/motor.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/sys/_stdint.h
+source/motor.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdbool.h
 
 ../source/motor.c:
 
@@ -54,4 +55,6 @@ source/motor.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/machine/_stdint.h:
 
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/sys/_stdint.h:
+
+/Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdbool.h:
 
