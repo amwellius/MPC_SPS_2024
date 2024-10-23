@@ -12,6 +12,7 @@
 #include "include/ADC.h"
 #include "include/motor.h"
 #include "include/LED.h"
+#include "include/UART.h"
 
 // VARIABLES
 
@@ -19,6 +20,7 @@
 #define axis_enable_z // set z y x for axis to be enabled for ADC motor control
 
 // FUNCTIONS
+
 /*
  * Function for very simple controlling of the car speed according to the data from the ADC.
  * The ADC data is processed every ~62.5ms
@@ -29,33 +31,32 @@ void car_control_simple(void)
     uint16_t y_axis = 0;
     uint16_t z_axis = 0;
 
+    // this happens every ~62.5 ms
     if (flag_62ms)
     {
-        LED_FR_toggle();
+//        LED_FR_toggle();
         // ADC operation
         // Get the results using the getter function
         x_axis = ADC_get_result(2);
         y_axis = ADC_get_result(3);
         z_axis = ADC_get_result(4);
 
-        // left / right
-    #ifdef axis_enable_z
-        switch(z_axis)
+    #ifdef axis_enable_x
+        // up / down
+        // doesnt work properly. We dont need this
+        switch(x_axis)
         {
-        case 0 ... 1952:    // left
+        case 0 ... 2300:    // stable
             LED_RL_ON();
             LED_RR_OFF();
-            motor_pwm(PWM_LEVEL_4);
             break;
-        case 1962 ... 4096: // right
+        case 2310 ... 4096: //
             LED_RL_OFF();
             LED_RR_ON();
-            motor_pwm(PWM_LEVEL_4);
             break;
         default:
-            LED_RL_OFF();
-            LED_RR_OFF();
-            motor_pwm(PWM_LEVEL_6);
+            LED_RL_ON();
+            LED_RR_ON();
             break;
         }
 
@@ -76,25 +77,31 @@ void car_control_simple(void)
             LED_RR_ON();
             break;
         }
-    #elif defined(axis_enable_x)
-        // up / down
-        // doesnt work properly. We dont need this
-        switch(x_axis)
+    #elif defined(axis_enable_z)
+        // left / right
+        switch(z_axis)
         {
-        case 0 ... 2300:    // stable
+        case 0 ... 1952:    // left
             LED_RL_ON();
             LED_RR_OFF();
+            motor_pwm(PWM_LEVEL_4);
             break;
-        case 2310 ... 4096: //
+        case 1962 ... 4096: // right
             LED_RL_OFF();
             LED_RR_ON();
+            motor_pwm(PWM_LEVEL_4);
             break;
         default:
-            LED_RL_ON();
-            LED_RR_ON();
+            LED_RL_OFF();
+            LED_RR_OFF();
+            motor_pwm(PWM_LEVEL_6);
             break;
         }
     #endif
+
+        // Send data over UART BLUETOOTH
+        ble_send_uint16(z_axis);
+        ble_send("\n");
 
         flag_62ms = 0;
     }

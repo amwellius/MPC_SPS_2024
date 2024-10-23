@@ -16,6 +16,6 @@
 // VARIABLES
 
 // FUNCTIONS
-void car_control_simple(void);
+void car_control_simple(void);      // simple motor PWM ADC data controlling
 
 #endif /* AUX_H_ */
