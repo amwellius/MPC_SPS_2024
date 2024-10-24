@@ -35,6 +35,8 @@ int main(void)
     ADC_start();
     UART_init();
 
+    volatile uint32_t temp_data = 0;
+
     // infinite loop
     while (1) {
 
@@ -57,6 +59,7 @@ int main(void)
 
         // 1ms interrupt
         if (flag_1ms) {               // Check if flag is set
+//            temp_data = moving_average();
             flag_1ms = 0;             // Clear the flag
         }
 
@@ -69,6 +72,7 @@ int main(void)
         // 500ms interrupt
         if (flag_500ms) {               // Check if flag is set
 //            ble_send("Every 500ms\n");
+//            ble_send("\n");
             flag_500ms = 0;             // Clear the flag
         }
 

@@ -12,7 +12,8 @@
 #include <msp430.h>
 
 // VARIABLES
-uint16_t results[5];  // Define the array
+volatile uint16_t ADC_raw_results[5];  // Define the array
+volatile uint16_t ADC_filtered_results[5];
 
 // FUNCTIONS
 void ADC_init(void)
@@ -43,9 +44,34 @@ void ADC_start(void)
 
 uint16_t ADC_get_result(uint8_t index)
 {
-    return results[index];
+#ifdef filter_ON
+    return ADC_filtered_results[index];
+#else
+    return ADC_raw_results[index];
+#endif
 }
 
+// Function to add a new sample and compute the moving average
+int32_t moving_average(void)
+{
+    volatile uint32_t new_sample = ADC_raw_results[4];
+    static int32_t samples[WINDOW_SIZE] = {0};  // Buffer for storing samples
+    static uint8_t index = 0;                   // Current index for the buffer
+    static uint32_t sum = 0;                     // Sum of the samples
+
+    // Remove the oldest sample from the sum
+    sum -= samples[index];
+
+    // Add the new sample to the buffer and the sum
+    samples[index] = new_sample;
+    sum += new_sample;
+
+    // Update the index (wrap around)
+    index = (index + 1) % WINDOW_SIZE;
+
+    // Return the average
+    return sum / WINDOW_SIZE;
+}
 
 // **************************************INTERUPTS************************************** //
 #pragma vector=ADC12_VECTOR
@@ -66,13 +92,16 @@ __interrupt void ADC12ISR (void)
   case 20:                            // Vector 20:  ADC12IFG7
 //      LED_FL_toggle();
       ADC12CTL0 &=~ADC12SC;                // For sequence-of-Channels mode, ADC12SC must be cleared by software after each sequence to trigger another sequence
-      results[0] = ADC12MEM3;                 // Move results, IFG is cleared
-      results[1] = ADC12MEM4;                 // Move results, IFG is cleared
-      results[2] = ADC12MEM5;                 // Move results, IFG is cleared // X (up / down)
-      results[3] = ADC12MEM6;                 // Move results, IFG is cleared // Y (forward-backward)
-      results[4] = ADC12MEM7;                 // Move results, IFG is cleared // Z (left-right)
+      ADC_raw_results[0] = ADC12MEM3;      // Move results, IFG is cleared
+      ADC_raw_results[1] = ADC12MEM4;      // Move results, IFG is cleared
+      ADC_raw_results[2] = ADC12MEM5;      // Move results, IFG is cleared // X (up / down)
+      ADC_raw_results[3] = ADC12MEM6;      // Move results, IFG is cleared // Y (forward-backward)
+      ADC_raw_results[4] = ADC12MEM7;      // Move results, IFG is cleared // Z (left-right)
 //      LED_FL_OFF();
       ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
+    #ifdef filter_ON
+      ADC_filtered_results[4] = moving_average();
+    #endif
       __bic_SR_register_on_exit(LPM0_bits);   // exit low power mode if entered
   case 22: break;                           // Vector 22:  ADC12IFG8
   case 24: break;                           // Vector 24:  ADC12IFG9

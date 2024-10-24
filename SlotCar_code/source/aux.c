@@ -76,22 +76,27 @@ void car_control_simple(void)
         }
     #elif defined(axis_enable_z)
         // left / right
+        /*
+         * looks like middle value it 1964. There also might be a bit of offset.
+         * PROBLEM: When the motor is running, the ADC data fluctuates - is in noise,
+         * so the speed adjusts accordingly. However, this is only noise not a real data reading.
+         */
         switch(z_axis)
         {
-        case 0 ... 1952:    // left
+        case 0 ... 1951:    // left
             LED_RL_ON();
             LED_RR_OFF();
-            motor_pwm(PWM_LEVEL_4);
+            motor_pwm(PWM_LEVEL_2);
             break;
-        case 1962 ... 4096: // right
+        case 1968 ... 4096: // right
             LED_RL_OFF();
             LED_RR_ON();
-            motor_pwm(PWM_LEVEL_4);
+            motor_pwm(PWM_LEVEL_2);
             break;
         default:
             LED_RL_OFF();
             LED_RR_OFF();
-            motor_pwm(PWM_LEVEL_6);
+            motor_pwm(PWM_LEVEL_4);
             break;
         }
     #endif
