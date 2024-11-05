@@ -13,7 +13,7 @@
 #include <msp430.h>
 
 // DEFINITIONS
-#define WINDOW_SIZE 100  // Window for moving average filter
+#define WINDOW_SIZE 1000  // Window for moving average filter
 #define filter_ON      // Comment this out to disable the filter
 
 // FUNCTIONS

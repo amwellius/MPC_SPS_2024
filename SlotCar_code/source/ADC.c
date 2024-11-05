@@ -56,7 +56,7 @@ int32_t moving_average(void)
 {
     volatile uint32_t new_sample = ADC_raw_results[4];
     static int32_t samples[WINDOW_SIZE] = {0};  // Buffer for storing samples
-    static uint8_t index = 0;                   // Current index for the buffer
+    static uint16_t index = 0;                   // Current index for the buffer
     static uint32_t sum = 0;                     // Sum of the samples
 
     // Remove the oldest sample from the sum
