@@ -5,6 +5,7 @@
 "./source/SPI.obj"
 "./source/UART.obj"
 "./source/aux.obj"
+"./source/flash_memory.obj"
 "./source/motor.obj"
 "./source/timers.obj"
 "../lnk_msp430f5437a.cmd"

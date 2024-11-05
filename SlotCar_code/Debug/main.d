@@ -27,6 +27,7 @@ main.obj: ../include/ADXL343.h
 main.obj: ../include/motor.h
 main.obj: ../include/UART.h
 main.obj: ../include/aux.h
+main.obj: ../include/flash_memory.h
 
 ../main.c:
 
@@ -81,4 +82,6 @@ main.obj: ../include/aux.h
 ../include/UART.h:
 
 ../include/aux.h:
+
+../include/flash_memory.h:
 
