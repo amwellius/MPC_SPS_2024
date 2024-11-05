@@ -39,65 +39,65 @@ int main(void)
     init_timerB0();
     init_timerA1();
     motor_init();
-//    ADC_init();
-//    ADC_start();
+    ADC_init();
+    ADC_start();
     UART_init();
 
 
     //// tests //////
-    uint16_t i = 0;
-    ble_send("\n \t *** STARTING STATE MACHINE ***\n\n");
-    state_machine_init();  // Initialize the state machine
+//    uint16_t i = 0;
+//    ble_send("\n \t *** STARTING STATE MACHINE ***\n\n");
+//    state_machine_init();  // Initialize the state machine
     //// tests //////
 
-    while (1)
-    {
+//    while (1)
+//    {
         //// tests //////
-        car_control_FSM();
+//        car_control_FSM();
         //// tests //////
 
-        if (variable_delay_ms(1, 1000)) {
-//            LED_FR_toggle(); // Example task
-        }
+//        if (variable_delay_ms(1, 1000)) {
+////            LED_FR_toggle(); // Example task
+//        }
+//
+//
+//        if (variable_delay_ms(2, 62)) {
+//
+//            if (i<SAMPLE_COUNT)
+//            {
+////                ble_send_uint16(adc_data[i]);
+////                ble_send("\n");
+//                i++;
+//            }
+//
+//            switch(adc_data[i])
+//            {
+//            case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
+//                LED_RR_ON();
+//                LED_RL_OFF();
+//                motor_pwm(PWM_LEVEL_4);
+//                break;
+//            case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
+//                LED_RR_OFF();
+//                LED_RL_ON();
+//                motor_pwm(PWM_LEVEL_4);
+//                break;
+//            default:
+//                LED_RL_OFF();
+//                LED_RR_OFF();
+//                motor_pwm(PWM_LEVEL_5);
+//                break;
+//            }
+//
+//            if (i==SAMPLE_COUNT)
+//            {
+//                i = 0;
+//            }
+//            LED_FL_toggle();
+//
+//        }
 
-
-        if (variable_delay_ms(2, 62)) {
-
-            if (i<SAMPLE_COUNT)
-            {
-//                ble_send_uint16(adc_data[i]);
-//                ble_send("\n");
-                i++;
-            }
-
-            switch(adc_data[i])
-            {
-            case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
-                LED_RR_ON();
-                LED_RL_OFF();
-                motor_pwm(PWM_LEVEL_4);
-                break;
-            case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
-                LED_RR_OFF();
-                LED_RL_ON();
-                motor_pwm(PWM_LEVEL_4);
-                break;
-            default:
-                LED_RL_OFF();
-                LED_RR_OFF();
-                motor_pwm(PWM_LEVEL_5);
-                break;
-            }
-
-            if (i==SAMPLE_COUNT)
-            {
-                i = 0;
-            }
-            LED_FL_toggle();
-
-        }
-
-    }
+//    }
 
 //    car_control_FSM();
     //// tests //////
@@ -112,7 +112,7 @@ int main(void)
     // infinite loop
     while (1)
     {
-//        car_control_simple();
+        car_control_simple();
 //        car_control_FSM();
 
         if (variable_delay_ms(0, 100)) {

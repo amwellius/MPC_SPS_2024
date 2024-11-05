@@ -56,6 +56,8 @@ void car_control_simple(void)
             LED_RR_ON();
             break;
         }
+        ble_send_uint16(x_axis);
+        ble_send("\n");
 
         // forward / backward
     #elif defined(axis_enable_y)
@@ -74,6 +76,8 @@ void car_control_simple(void)
             LED_RR_ON();
             break;
         }
+        ble_send_uint16(y_axis);
+        ble_send("\n");
     #elif defined(axis_enable_z)
         // left / right
         /*
