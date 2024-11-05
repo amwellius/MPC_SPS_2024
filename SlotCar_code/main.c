@@ -46,12 +46,18 @@ int main(void)
 
     //// tests //////
     uint16_t i = 0;
+    ble_send("\n \t *** STARTING STATE MACHINE ***\n\n");
+    state_machine_init();  // Initialize the state machine
     //// tests //////
 
     while (1)
     {
+        //// tests //////
+        car_control_FSM();
+        //// tests //////
+
         if (variable_delay_ms(1, 1000)) {
-            LED_FR_toggle(); // Example task
+//            LED_FR_toggle(); // Example task
         }
 
 
@@ -59,8 +65,8 @@ int main(void)
 
             if (i<SAMPLE_COUNT)
             {
-                ble_send_uint16(adc_data[i]);
-                ble_send("\n");
+//                ble_send_uint16(adc_data[i]);
+//                ble_send("\n");
                 i++;
             }
 
@@ -93,6 +99,7 @@ int main(void)
 
     }
 
+//    car_control_FSM();
     //// tests //////
 
 

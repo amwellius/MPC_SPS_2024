@@ -112,6 +112,75 @@ void car_control_simple(void)
     }
 }
 
+/*
+ * A Finite State Machine for controlling the motor PWM speed.
+ * In main.c, first initialize the FSM. Then use car_control_FSM in the while look to run indefinitely.
+ *
+ */
+
+static State current_state = STATE_INIT;
+static uint8_t state_counter = 0;
+
+// Initialize the state machine
+void state_machine_init(void) {
+    current_state = STATE_INIT;
+    ble_send("State Machine Initialized: STATE_INIT\n");
+}
+
+// Function to run the state machine logic
+void car_control_FSM(void)
+{
+    if (variable_delay_ms(3, 1000))
+    {
+        switch (current_state) {
+            case STATE_INIT:
+                ble_send("\nIn STATE_INIT\n");
+                // Example: Transition to RUNNING
+                state_transition(STATE_RUNNING);
+                break;
+
+            case STATE_RUNNING:
+                ble_send("\nIn STATE_RUNNING\n");
+                // Add conditions to transition to STOPPED or other states
+                ble_send("\nToggle FR led.\n");
+                LED_FR_toggle();
+                state_transition(STATE_ERROR);
+                break;
+
+            case STATE_STOPPED:
+                ble_send("\nIn STATE_STOPPED\n");
+                // Conditions to move to INIT, ERROR, etc.
+                state_transition(10); // unknown state
+                break;
+
+            case STATE_ERROR:
+                ble_send("\nIn STATE_ERROR\n");
+                // Error handling or recovery
+                state_transition(STATE_STOPPED);
+                break;
+
+            default:
+                ble_send("\nUnknown State!\n");
+                ble_send("State reset counter: ");
+                state_counter++;
+                ble_send_uint16(state_counter);
+                ble_send(".\n");
+                ble_send("*** reset FSM now! *** \n\n");
+                state_machine_init();
+                break;
+            }
+    }
+}
+
+// Function to handle state transitions
+void state_transition(State new_state) {
+    ble_send("Transitioning from ");
+    ble_send_uint16(current_state);
+    ble_send(" to ");
+    ble_send_uint16(new_state);
+    ble_send(".\n");
+    current_state = new_state;
+}
 
 
 
