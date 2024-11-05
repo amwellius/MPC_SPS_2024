@@ -28,6 +28,7 @@ main.obj: ../include/motor.h
 main.obj: ../include/UART.h
 main.obj: ../include/aux.h
 main.obj: ../include/flash_memory.h
+main.obj: ../include/data_temp_storage.h
 
 ../main.c:
 
@@ -84,4 +85,6 @@ main.obj: ../include/flash_memory.h
 ../include/aux.h:
 
 ../include/flash_memory.h:
+
+../include/data_temp_storage.h:
 

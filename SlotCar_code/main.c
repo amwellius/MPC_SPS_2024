@@ -14,8 +14,16 @@
 #include "include/motor.h"
 #include "include/UART.h"
 #include "include/aux.h"
+#include "include/flash_memory.h"
+#include "include/data_temp_storage.h"
 
 // VARIABLES
+
+//// tests //////
+
+//// tests //////
+
+
 
 // MAIN LOOP
 int main(void)
@@ -23,7 +31,7 @@ int main(void)
     WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
     initClockTo16MHz();         // initialize clock timer 16 MHz
     __bis_SR_register(GIE);     // Enable global interrupts
-    _BIS_SR(GIE);        // some interrupts as well
+    _BIS_SR(GIE);               // some interrupts as well
     __enable_interrupt();
 
 
@@ -31,19 +39,74 @@ int main(void)
     init_timerB0();
     init_timerA1();
     motor_init();
-    ADC_init();
-    ADC_start();
+//    ADC_init();
+//    ADC_start();
     UART_init();
 
-    volatile uint32_t temp_data = 0;
+
+    //// tests //////
+    uint16_t i = 0;
+    //// tests //////
+
+    while (1)
+    {
+        if (variable_delay_ms(1, 1000)) {
+            LED_FR_toggle(); // Example task
+        }
+
+
+        if (variable_delay_ms(2, 62)) {
+
+            if (i<SAMPLE_COUNT)
+            {
+                ble_send_uint16(adc_data[i]);
+                ble_send("\n");
+                i++;
+            }
+
+            switch(adc_data[i])
+            {
+            case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
+                LED_RR_ON();
+                LED_RL_OFF();
+                motor_pwm(PWM_LEVEL_4);
+                break;
+            case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
+                LED_RR_OFF();
+                LED_RL_ON();
+                motor_pwm(PWM_LEVEL_4);
+                break;
+            default:
+                LED_RL_OFF();
+                LED_RR_OFF();
+                motor_pwm(PWM_LEVEL_5);
+                break;
+            }
+
+            if (i==SAMPLE_COUNT)
+            {
+                i = 0;
+            }
+            LED_FL_toggle();
+
+        }
+
+    }
+
+    //// tests //////
+
+
+
+
+
+
+
 
     // infinite loop
-    while (1) {
-
-//        delay_ms(200);
-//        LED_FL_toggle();
-
-        car_control_simple();
+    while (1)
+    {
+//        car_control_simple();
+//        car_control_FSM();
 
         if (variable_delay_ms(0, 100)) {
             // Perform task every xxx ms
