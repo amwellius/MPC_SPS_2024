@@ -16,8 +16,9 @@
 // hard-stored pre-ADC data
 /*
  * data from a real race track. File "data_20241104_143110_PWM4_WINDOW1000", taken only the first 555 samples.
+ * consider using "const" as the data doesn't change
  */
-extern const uint16_t adc_data[SAMPLE_COUNT] = {
+extern  uint16_t adc_data[SAMPLE_COUNT] = {
     /* Paste your ADC data here, comma-separated */
                             1948,
                             1946,

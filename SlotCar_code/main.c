@@ -19,9 +19,69 @@
 
 // VARIABLES
 
-//// tests //////
 
 //// tests //////
+#define KERNEL_SIZE 8  // Define based on expected pattern size
+#define THRESHOLD -2000 // Example threshold; adjust based on testing
+#define DEBOUNCE_COUNT 3  // Number of consistent readings before state change
+
+// Define your convolution kernel
+const int16_t kernel[KERNEL_SIZE] = {0, 0, 0, -1, -1, 0, 0, 0}; // Example kernel for bends
+
+
+
+// Function to perform convolution on the ADC data
+int16_t perform_convolution(uint16_t* data, uint32_t length, uint32_t index) {
+    int16_t conv_result = 0;
+    uint8_t i = 0;
+
+    // Apply kernel only if there's enough data to compute it
+    if (index >= KERNEL_SIZE / 2 && index < length - KERNEL_SIZE / 2) {
+        for (i = 0; i < KERNEL_SIZE; i++) {
+            conv_result += data[index - KERNEL_SIZE / 2 + i] * kernel[i];
+        }
+    }
+    return conv_result;
+}
+
+
+
+// Function to determine if the car is in a bend or straight section
+void analyze_track_section(uint16_t* data, uint32_t length) {
+    uint32_t i = 0;
+    uint8_t bend_count = 0;
+    int16_t conv_value;
+    uint8_t length_temp = 20;
+
+    for (i = 0; i < length; i++) {
+        conv_value = perform_convolution(data, length, i);
+//        ble_send("FINAL conv_value: ");
+        ble_send_int16(conv_value);
+        ble_send("\n");
+//        ble_send("\n");
+
+        // Check if conv_value exceeds threshold consistently
+        if (conv_value > THRESHOLD) {
+            bend_count++;
+            ble_send("\nfind a HIGHT value.\n ");
+            if (bend_count >= DEBOUNCE_COUNT) {
+//                state_transition(STATE_SLOW_DOWN);  // Example state transition for bends
+                bend_count = 0; // Reset after transition
+            }
+        } else {
+            bend_count = 0;
+
+//            state_transition(STATE_NORMAL_SPEED);  // Straight path state transition
+        }
+
+        if (conv_value < THRESHOLD) {
+                    ble_send("\nfind a low value - two low values.\n ");
+                }
+    }
+
+}
+//// tests //////
+
 
 
 
@@ -38,9 +98,9 @@ int main(void)
     LED_init();
     init_timerB0();
     init_timerA1();
-    motor_init();
-    ADC_init();
-    ADC_start();
+//    motor_init();
+//    ADC_init();
+//    ADC_start();
     UART_init();
 
 
@@ -100,7 +160,26 @@ int main(void)
 //    }
 
 //    car_control_FSM();
+
+
     //// tests //////
+//    ble_send("\nKERNEL: 1 0 -1 0 0 1\n");
+//    analyze_track_section(adc_data,SAMPLE_COUNT);
+    while(1){
+
+        if (variable_delay_ms(1, 400)) {
+            // Perform another task every xxx ms
+            analyze_track_section(adc_data,SAMPLE_COUNT);
+            LED_FR_toggle(); // Example task
+        }
+
+
+
+
+    }
+
+    //// tests //////
+
 
 
 
