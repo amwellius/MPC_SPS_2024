@@ -1,0 +1,39 @@
+Understanding Convolution in This Context
+Convolution is a mathematical way to detect patterns in a sequence of data. When you apply a convolution kernel to your ADC data, you’re looking to highlight specific shapes or trends in the values—like the differences that signify a curve or straight path.
+
+How Your Kernel Detects Bends
+The kernel you’ve defined, {1, -1, -1, 1, 0}, is designed to detect rapid changes in the ADC readings:
+
+Positive and negative values in the kernel amplify differences between data points, emphasizing areas where the data quickly rises or falls.
+For instance, in a curve, the forces (and hence ADC values) might change more dramatically compared to a straight path.
+When you apply this kernel to the ADC data in sequence, each "convolution result" highlights sections where the pattern in the data matches (or mismatches) the shape of the kernel. Higher convolution results mean the data resembles the "shape" of the kernel, which in this case should correspond to a curve.
+
+Interpreting the Result
+By summing the product of your data with the kernel at each point, the convolution process amplifies patterns similar to the kernel. Here’s how it works step-by-step for a given position index:
+
+Kernel Application: For each point in your ADC data, the kernel acts like a sliding window. At each position, it multiplies kernel values with the corresponding ADC readings.
+Sum of Products: This creates a "weighted sum" that is high if the data looks like the pattern in the kernel.
+Threshold Check: If this weighted sum (convolution result) exceeds your threshold, it’s likely a curve; otherwise, it’s closer to a straight path.
+So in your case:
+
+If the kernel pattern appears in the data, the convolution result goes high, indicating a bend.
+A result below the threshold would suggest the data is more "stable," likely representing a straight path.
+
+
+
+
+Positive values (1) in the kernel indicate that the current value is expected to be higher than the previous one (i.e., an upward trend in the data).
+Negative values (-1) in the kernel indicate that the current value is expected to be lower than the previous one (i.e., a downward trend).
+Zero (0) means that there’s no significant change or you don’t expect the current value to differ much from the previous one.
+So when you apply this kernel to your ADC data:
+
+The sum of the convolution will increase when you encounter a section of data where the pattern matches the kernel's positive values (i.e., an increase in the ADC data).
+The sum will decrease when you encounter a section where the pattern matches the kernel's negative values (i.e., a decrease in the ADC data).
+For example, with your kernel {1, -1, -1, 1, 0}, the convolution will detect an increase followed by a decrease (like a peak or dip). The result will be higher when there's a pattern similar to this, and lower if the data behaves differently.
+
+In summary:
+
+1 → Looking for an upward trend (current > previous).
+-1 → Looking for a downward trend (current < previous).
+0 → No trend or no change (current ≈ previous).
+This approach allows you to identify transitions, like detecting a bend in your track when there’s a shift from an increasing to a decreasing trend (or vice versa).
