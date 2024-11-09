@@ -11,15 +11,20 @@
 #include <stdint.h>
 
 // DEFINITIONS
-#define SAMPLE_COUNT 555
+#define STORED_DATA_1_LENGTH 555
 
 // hard-stored pre-ADC data
 /*
  * data from a real race track. File "data_20241104_143110_PWM4_WINDOW1000", taken only the first 555 samples.
  * consider using "const" as the data doesn't change
  */
-extern  uint16_t adc_data[SAMPLE_COUNT] = {
+extern const uint16_t stored_track_data_1[STORED_DATA_1_LENGTH] = {
     /* Paste your ADC data here, comma-separated */
+//                           2000,
+//                           2000,
+//                           2000,
+//                           2000,
+//                           2000,
                             1948,
                             1946,
                             1948,
