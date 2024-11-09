@@ -1,0 +1,41 @@
+With correlation values being large due to the summing of many products, setting an appropriate threshold (THRESHOLD) is key to detecting a new lap accurately. Here’s a step-by-step approach to determine and interpret maxCorrelation and set a reliable threshold:
+
+1. Understand the Scale of maxCorrelation
+The maxCorrelation value is essentially a sum of products, with each product based on pairs of ADC values in the referenceLap and currentLapData arrays. The maximum possible value for maxCorrelation will depend on:
+
+The number of samples (windowSize)
+The range of ADC values (from 0 to 4095 in your setup)
+For example:
+
+If windowSize is 100, and your ADC values average around 2000, the maximum possible correlation would be roughly 
+100
+×
+2000
+×
+2000
+=
+400
+,
+000
+,
+000
+100×2000×2000=400,000,000.
+2. Determine maxCorrelation Range Empirically
+Run a few test laps and log the values of maxCorrelation at each calculation. By examining the data:
+
+Observe the correlation values when the lap matches (should be high).
+Observe the correlation values when there’s no match (should be significantly lower).
+This process gives you a rough range, making it easier to set a threshold between the typical "no match" and "match" values.
+
+3. Setting THRESHOLD
+Once you have observed the typical range of maxCorrelation, you can set THRESHOLD to be just below the values that consistently indicate a match.
+
+For example:
+
+If you observe that correlation values hover around 300 million during a match, while "no match" values stay below 100 million, set your THRESHOLD to somewhere around 200 million.
+4. Fine-Tuning
+After an initial THRESHOLD setting:
+
+Test the detection accuracy on multiple laps with varying speeds or conditions.
+Adjust THRESHOLD slightly if you notice missed detections or false positives.
+This empirical approach will give you a more intuitive understanding of the correlation values and help ensure reliable lap detection. Let me know if you’d like help with a logging method to record these values for easier analysis!

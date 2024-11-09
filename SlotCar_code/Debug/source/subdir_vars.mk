@@ -10,6 +10,7 @@ C_SRCS += \
 ../source/SPI.c \
 ../source/UART.c \
 ../source/aux.c \
+../source/data_operation.c \
 ../source/flash_memory.c \
 ../source/motor.c \
 ../source/timers.c 
@@ -21,6 +22,7 @@ C_DEPS += \
 ./source/SPI.d \
 ./source/UART.d \
 ./source/aux.d \
+./source/data_operation.d \
 ./source/flash_memory.d \
 ./source/motor.d \
 ./source/timers.d 
@@ -32,6 +34,7 @@ OBJS += \
 ./source/SPI.obj \
 ./source/UART.obj \
 ./source/aux.obj \
+./source/data_operation.obj \
 ./source/flash_memory.obj \
 ./source/motor.obj \
 ./source/timers.obj 
@@ -43,6 +46,7 @@ OBJS__QUOTED += \
 "source/SPI.obj" \
 "source/UART.obj" \
 "source/aux.obj" \
+"source/data_operation.obj" \
 "source/flash_memory.obj" \
 "source/motor.obj" \
 "source/timers.obj" 
@@ -54,6 +58,7 @@ C_DEPS__QUOTED += \
 "source/SPI.d" \
 "source/UART.d" \
 "source/aux.d" \
+"source/data_operation.d" \
 "source/flash_memory.d" \
 "source/motor.d" \
 "source/timers.d" 
@@ -65,6 +70,7 @@ C_SRCS__QUOTED += \
 "../source/SPI.c" \
 "../source/UART.c" \
 "../source/aux.c" \
+"../source/data_operation.c" \
 "../source/flash_memory.c" \
 "../source/motor.c" \
 "../source/timers.c" 
