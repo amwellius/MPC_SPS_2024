@@ -176,6 +176,21 @@ void corrCollectADCData(uint16_t newADCValue)
 }
 
 /*
+ * Function to clean correlation buffers and variables in case of a need of starting from scratch
+ */
+void corrClearBuffers(void)
+{
+    currentDataCounter = 0;  // Track current number of collected samples
+    referenceDataDone = false;  // Flag to track if first lap is complete
+    firstCorrelationDone = false; // Flag to indicate that the first correlation is done
+
+    // clear arrays
+    memset(referenceData, 0, sizeof(referenceData));
+    memset(referenceData, 0, sizeof(referenceData));
+    memset(sliderData, 0, sizeof(sliderData));
+}
+
+/*
  * Function to perform convolution on the ADC data
  */
 int16_t perform_convolution(uint16_t* data, uint32_t length, uint32_t index) {

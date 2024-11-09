@@ -11,6 +11,8 @@
 // INCLUDES
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 #include "include/UART.h"
 
 // DEFINITIONS
@@ -31,6 +33,7 @@
 // FUNCTIONS
 bool corrDetectNewLapStart(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize);
 void corrCollectADCData(uint16_t newADCValue);
+void corrClearBuffers(void);
 
 int16_t perform_convolution(uint16_t* data, uint32_t length, uint32_t index);
 void analyze_track_section(uint16_t* data, uint32_t length);
