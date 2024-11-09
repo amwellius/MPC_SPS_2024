@@ -55,7 +55,7 @@ uint16_t ADC_get_result(uint8_t index)
 int32_t moving_average(void)
 {
     volatile uint32_t new_sample = ADC_raw_results[4];
-    static int32_t samples[WINDOW_SIZE] = {0};  // Buffer for storing samples
+    static int32_t samples[FILTER_WINDOW_SIZE] = {0};  // Buffer for storing samples
     static uint16_t index = 0;                   // Current index for the buffer
     static uint32_t sum = 0;                     // Sum of the samples
 
@@ -67,10 +67,10 @@ int32_t moving_average(void)
     sum += new_sample;
 
     // Update the index (wrap around)
-    index = (index + 1) % WINDOW_SIZE;
+    index = (index + 1) % FILTER_WINDOW_SIZE;
 
     // Return the average
-    return sum / WINDOW_SIZE;
+    return sum / FILTER_WINDOW_SIZE;
 }
 
 // **************************************INTERUPTS************************************** //
