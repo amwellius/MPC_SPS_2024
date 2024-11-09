@@ -30,6 +30,10 @@ main.obj: ../include/aux.h
 main.obj: ../include/flash_memory.h
 main.obj: ../include/data_temp_storage.h
 main.obj: ../include/data_operation.h
+main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdio.h
+main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdarg.h
+main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/string.h
+main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/xlocale/_string.h
 
 ../main.c:
 
@@ -90,4 +94,12 @@ main.obj: ../include/data_operation.h
 ../include/data_temp_storage.h:
 
 ../include/data_operation.h:
+
+/Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdio.h:
+
+/Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdarg.h:
+
+/Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/string.h:
+
+/Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/xlocale/_string.h:
 

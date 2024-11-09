@@ -122,6 +122,7 @@ int main(void)
                 ble_send_int32(79000000);
                 ble_send("\n");
                 ii = 0;
+                corrClearBuffers();
 //                ble_send("\na loop thru the data samples!\n");
             }
         }
