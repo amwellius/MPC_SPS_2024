@@ -109,6 +109,39 @@ void ble_send_int16(int16_t number) {
     }
 }
 
+/*
+ * Send int32_t data over Bluetooth
+ */
+void ble_send_int32(int32_t number) {
+    char buffer[12];  // Buffer to hold ASCII string (max 10 digits + sign + null terminator)
+    int i = 0;
+    int is_negative = 0;
+
+    // Handle negative numbers
+    if (number < 0) {
+        is_negative = 1;
+        number = -number;  // Take the absolute value
+        ble_send("-");     // Send the negative sign
+    }
+
+    // Handle 0 case explicitly
+    if (number == 0) {
+        ble_send("0");
+        return;
+    }
+
+    // Extract digits from the number (from least significant to most significant)
+    while (number > 0) {
+        buffer[i++] = (number % 10) + '0';  // Convert digit to ASCII
+        number /= 10;
+    }
+
+    // Reverse and send the digits since they were stored in reverse
+    while (i > 0) {
+        ble_send((char[]){buffer[--i], '\0'});  // Send one digit at a time
+    }
+}
+
 // **************************************INTERUPTS************************************** //
 #pragma vector = USCI_A1_VECTOR
 __interrupt void USCI_A1_ISR(void) {
