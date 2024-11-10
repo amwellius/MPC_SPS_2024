@@ -48,8 +48,8 @@ bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData,
 //    ble_send("\nCorrelation max: ");
 
     // BLE SEND
-    ble_send_int32(maxCorrelation);
-    ble_send("\n");
+//    ble_send_int32(maxCorrelation);
+//    ble_send("\n");
 
     // Check if the correlation is above the CORRELATION_THRESHOLD to detect a new lap
     return maxCorrelation > CORRELATION_THRESHOLD;

@@ -28,7 +28,6 @@ main.obj: ../include/motor.h
 main.obj: ../include/UART.h
 main.obj: ../include/aux.h
 main.obj: ../include/flash_memory.h
-main.obj: ../include/data_temp_storage.h
 main.obj: ../include/data_operation.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdio.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdarg.h
@@ -90,8 +89,6 @@ main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/i
 ../include/aux.h:
 
 ../include/flash_memory.h:
-
-../include/data_temp_storage.h:
 
 ../include/data_operation.h:
 

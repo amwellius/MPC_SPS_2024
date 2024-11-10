@@ -16,7 +16,7 @@
 
 // Define the states for the state machine
 typedef enum {
-    STATE_INIT,
+    STATE_REF_LAP,
     STATE_RUNNING,
     STATE_STOPPED,
     STATE_ERROR,

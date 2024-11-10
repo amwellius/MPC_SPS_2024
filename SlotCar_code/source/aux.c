@@ -13,6 +13,8 @@
 #include "include/motor.h"
 #include "include/LED.h"
 #include "include/UART.h"
+#include "include/data_temp_storage.h"
+#include "include/data_operation.h"
 
 // VARIABLES
 
@@ -24,9 +26,13 @@
  */
 void car_control_simple(void)
 {
+    #ifdef axis_enable_x
     uint16_t x_axis = 0;
+    #elif defined(axis_enable_y)
     uint16_t y_axis = 0;
+    #elif defined(axis_enable_z)
     uint16_t z_axis = 0;
+    #endif
 
     // this happens every ~62.5 ms
     if (flag_62ms)
@@ -34,11 +40,15 @@ void car_control_simple(void)
 //        LED_FR_toggle();
         // ADC operation
         // Get the results using the getter function
+        #ifdef axis_enable_x
         x_axis = ADC_get_result(2);
+        #elif defined(axis_enable_y)
         y_axis = ADC_get_result(3);
+        #elif defined(axis_enable_z)
         z_axis = ADC_get_result(4);
+        #endif
 
-    #ifdef axis_enable_x
+        #ifdef axis_enable_x
         // up / down
         // doesnt work properly. We dont need this
         switch(x_axis)
@@ -60,7 +70,7 @@ void car_control_simple(void)
         ble_send("\n");
 
         // forward / backward
-    #elif defined(axis_enable_y)
+        #elif defined(axis_enable_y)
         switch(y_axis)
         {
         case 0 ... 2125:    // forward
@@ -78,7 +88,7 @@ void car_control_simple(void)
         }
         ble_send_uint16(y_axis);
         ble_send("\n");
-    #elif defined(axis_enable_z)
+        #elif defined(axis_enable_z)
         // left / right
         /*
          * looks like middle value it 1964 when the motor is NOT running. 0-1955 for right, 1968-4055 for left.
@@ -106,7 +116,7 @@ void car_control_simple(void)
             motor_pwm(PWM_LEVEL_5);
             break;
         }
-    #endif
+        #endif
 
         // Send data over UART BLUETOOTH
         ble_send_uint16(z_axis);
@@ -122,67 +132,186 @@ void car_control_simple(void)
  *
  */
 
-static State current_state = STATE_INIT;
+static State current_state = STATE_REF_LAP;
 static uint8_t state_counter = 0;
+bool temp_flag = false;
 
 // Initialize the state machine
 void state_machine_init(void) {
-    current_state = STATE_INIT;
+    current_state = STATE_REF_LAP;
     ble_send("State Machine Initialized: STATE_INIT\n");
 }
 
 // Function to run the state machine logic
+uint16_t ii = 0;
+uint16_t i = 0;
+uint16_t z_axis = 0;
 void car_control_FSM(void)
 {
-    if (variable_delay_ms(3, 1000))
-    {
-        switch (current_state) {
-            case STATE_INIT:
-                ble_send("\nIn STATE_INIT\n");
-                // Example: Transition to RUNNING
-                state_transition(STATE_RUNNING);
-                break;
-
-            case STATE_RUNNING:
-                ble_send("\nIn STATE_RUNNING\n");
-                // Add conditions to transition to STOPPED or other states
-                ble_send("\nToggle FR led.\n");
-                LED_FR_toggle();
-                state_transition(STATE_ERROR);
-                break;
-
-            case STATE_STOPPED:
-                ble_send("\nIn STATE_STOPPED\n");
-                // Conditions to move to INIT, ERROR, etc.
-                state_transition(10); // unknown state
-                break;
-
-            case STATE_ERROR:
-                ble_send("\nIn STATE_ERROR\n");
-                // Error handling or recovery
-                state_transition(STATE_STOPPED);
-                break;
-
-            default:
-                ble_send("\nUnknown State!\n");
-                ble_send("State reset counter: ");
-                state_counter++;
-                ble_send_uint16(state_counter);
-                ble_send(".\n");
-                ble_send("*** reset FSM now! *** \n\n");
-                state_machine_init();
-                break;
+    switch (current_state) {
+        case STATE_REF_LAP:
+            if (!temp_flag) {
+                ble_send("\n\nFSM START \nIn STATE_REF_LAP\n");
+                temp_flag = true;
             }
-    }
+
+            // set constant speed for reference lap
+            motor_pwm(PWM_LEVEL_4);
+            // blink rear LEDs while in reference lap
+            if (variable_delay_ms(6, 300)) {
+                LED_RR_toggle();
+                LED_RL_toggle();
+            }
+            ////// tests //////
+            if (variable_delay_ms(5, 62)) {
+                if (ii<STORED_DATA_1_LENGTH) {
+                    if (corrDetectNewLapStart(stored_track_data_1[ii])) {
+//                        temp_counter++;
+//                        ble_send("Lap counter: ");
+//                        ble_send_uint16(temp_counter);
+//                        ble_send("\n");
+
+                        ii = 0;
+//                        ble_send_int32(82000000);
+//                        ble_send("\n");
+
+              //****// TEMP clear buffers
+                        corrClearBuffers();
+                        state_transition(STATE_RUNNING);
+                        ii = 0;
+                        temp_flag = false;
+//                        LED_RL_toggle();
+//                        ble_send("\nShould exit STATE_REF_LAP!\n");
+                    }
+    //                ble_send("loops: ");
+    //                ble_send_uint16(ii);
+    //                ble_send("\n");
+                    ii++;
+                }
+//                if (ii == STORED_DATA_1_LENGTH)
+//                {
+//                    ble_send_int32(79500000);
+//                    ble_send("\n");
+//                    ii = 0;
+//                    corrClearBuffers();
+//    //                ble_send("\na loop thru the data samples!\n");
+//                }
+            }
+            break;
+
+        case STATE_RUNNING:
+//            ble_send("\nIn STATE_RUNNING\n");
+            if (!temp_flag) {
+                ble_send("In STATE_RUNNING\n");
+                temp_flag = true;
+            }
+            if (variable_delay_ms(5, 200)) {
+                LED_FR_toggle();
+//                ble_send("\nIn STATE_RUNNING\n");
+            }
+
+            if (flag_62ms)
+            {
+                // go thru saved data
+                if (i<STORED_DATA_2_LENGTH)
+                {
+                    // ADC operation
+                    // Get the results using the getter function
+                    z_axis = stored_track_data_2[i];
+                    switch(z_axis)
+                    {
+                    case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
+                        LED_RR_ON();
+                        LED_RL_OFF();
+                        motor_pwm(PWM_LEVEL_4);
+                        break;
+                    case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
+                        LED_RR_OFF();
+                        LED_RL_ON();
+                        motor_pwm(PWM_LEVEL_4);
+                        break;
+                    default:
+                        LED_RL_OFF();
+                        LED_RR_OFF();
+                        motor_pwm(PWM_LEVEL_5);
+                        break;
+                    }
+
+                    // Send data over UART BLUETOOTH
+//                    ble_send_uint16(z_axis);
+//                    ble_send("\n");
+
+                    i++;
+                }
+                flag_62ms = 0;
+                if (i==STORED_DATA_2_LENGTH){
+                    state_transition(STATE_STOPPED);
+                    temp_flag = false;
+                    i = 0;
+                    LED_FR_OFF();
+                }
+            }
+
+//            ble_send("\nToggle FR led.\n");
+//            LED_FR_toggle();
+//            state_transition(STATE_ERROR);
+            break;
+
+        case STATE_STOPPED:
+//            ble_send("\nIn STATE_STOPPED\n");
+
+            if (!temp_flag) {
+                ble_send("In STATE_STOPPED\n");
+                temp_flag = true;
+            }
+
+            static uint8_t temp_counter = 0;
+            // blink rear LEDs when in stopped lap
+            if (variable_delay_ms(6, 500)) {
+                LED_RR_toggle();
+                LED_RL_toggle();
+                ble_send("FSM reset in: ");
+                ble_send_uint16(20 - temp_counter);
+                ble_send("\n");
+                temp_counter++;
+            }
+            // after 30 seconds go back to Ref_lap
+            if (temp_counter == 20){
+                state_transition(STATE_REF_LAP);
+                temp_counter = 0;
+                temp_flag = false;
+            }
+
+
+            // Conditions to move to INIT, ERROR, etc.
+//            state_transition(10); // unknown state
+            break;
+
+        case STATE_ERROR:
+            ble_send("\nIn STATE_ERROR\n");
+            // Error handling or recovery
+            state_transition(STATE_STOPPED);
+            break;
+
+        default:
+            ble_send("\nUnknown State!\n");
+            ble_send("State reset counter: ");
+            state_counter++;
+            ble_send_uint16(state_counter);
+            ble_send(".\n");
+            ble_send("*** reset FSM now! *** \n\n");
+            state_machine_init();
+            break;
+        }
 }
 
 // Function to handle state transitions
 void state_transition(State new_state) {
-    ble_send("Transitioning from ");
-    ble_send_uint16(current_state);
-    ble_send(" to ");
-    ble_send_uint16(new_state);
-    ble_send(".\n");
+//    ble_send("Transitioning from ");
+//    ble_send_uint16(current_state);
+//    ble_send(" to ");
+//    ble_send_uint16(new_state);
+//    ble_send(".\n");
     current_state = new_state;
 }
 

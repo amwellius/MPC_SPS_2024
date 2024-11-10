@@ -15,11 +15,14 @@
 #include "include/UART.h"
 #include "include/aux.h"
 #include "include/flash_memory.h"
-#include "include/data_temp_storage.h"
+//#include "include/data_temp_storage.h"
 #include "include/data_operation.h"
 
-// VARIABLES
+// DEFINITIONS
+#define MASTER_BLE_DBG      // if defined, LED_FL toggles every 120ms to indicate debug mode
 
+// VARIABLES
+bool MASTER_BLE_DBG_flag = false;
 
 //// tests //////
 
@@ -56,12 +59,12 @@ int main(void)
 //        car_control_FSM();
         //// tests //////
 
-//        if (variable_delay_ms(1, 1000)) {
+//        if (variable_delay_ms(x, 1000)) {
 ////            LED_FR_toggle(); // Example task
 //        }
 //
 //
-//        if (variable_delay_ms(2, 62)) {
+//        if (variable_delay_ms(x, 62)) {
 //
 //            if (i<SAMPLE_COUNT)
 //            {
@@ -104,35 +107,53 @@ int main(void)
 
     //// tests //////
 
-    uint16_t ii = 0;
+//    uint16_t ii = 0;
+    uint8_t temp_counter = 0 ;
     while(1){
+        /* IF IN DEBUG MODE */
+        #ifdef MASTER_BLE_DBG
+                if (!MASTER_BLE_DBG_flag) {
+                    ble_send("\t **** DEBUG MODE ****\n");
+                    MASTER_BLE_DBG_flag = true;
+                }
+                if (variable_delay_ms(0, 120)) {
+                LED_FL_toggle(); // Example task
+                }
+        #endif
+        /* IF IN DEBUG MODE */
 
-        if (variable_delay_ms(5, 10)) {
-        // Perform task every xxx ms
-            LED_FR_toggle(); // Example task
-            if (ii<STORED_DATA_1_LENGTH) {
-                corrCollectADCData(stored_track_data_1[ii]);
-//                ble_send("loops: ");
-//                ble_send_uint16(ii);
+
+        car_control_FSM();
+//        if (variable_delay_ms(5, 10)) {
+//        // Perform task every xxx ms
+////            LED_FR_toggle(); // Example task
+//            if (ii<STORED_DATA_1_LENGTH) {
+//                if (corrDetectNewLapStart(stored_track_data_1[ii])) {
+//                    temp_counter++;
+////                    ble_send("Lap counter: ");
+////                    ble_send_uint16(temp_counter);
+////                    ble_send("\n");
+//                    ble_send_int32(82000000);
+//                    ble_send("\n");
+//                }
+////                ble_send("loops: ");
+////                ble_send_uint16(ii);
+////                ble_send("\n");
+//                ii++;
+//            }
+//            if (ii == STORED_DATA_1_LENGTH)
+//            {
+//                ble_send_int32(79500000);
 //                ble_send("\n");
-                ii++;
-            }
-            if (ii == STORED_DATA_1_LENGTH)
-            {
-                ble_send_int32(79000000);
-                ble_send("\n");
-                ii = 0;
-                corrClearBuffers();
-//                ble_send("\na loop thru the data samples!\n");
-            }
-        }
-
-        if (variable_delay_ms(6, 500)) {
-        LED_FL_toggle(); // Example task
-        }
+//                ii = 0;
+//                corrClearBuffers();
+////                ble_send("\na loop thru the data samples!\n");
+//            }
+//        }
     }
 
-    //// tests //////
+
+    ////// tests //////
 
 
 
@@ -145,18 +166,18 @@ int main(void)
     // infinite loop
     while (1)
     {
-        car_control_simple();
+//        car_control_simple();
 //        car_control_FSM();
 
-        if (variable_delay_ms(0, 100)) {
-            // Perform task every xxx ms
-            LED_FL_toggle(); // Example task
-        }
-
-        if (variable_delay_ms(1, 300)) {
-            // Perform another task every xxx ms
-            LED_FR_toggle(); // Example task
-        }
+//        if (variable_delay_ms(x, 100)) {
+//            // Perform task every xxx ms
+//            LED_FL_toggle(); // Example task
+//        }
+//
+//        if (variable_delay_ms(x, 300)) {
+//            // Perform another task every xxx ms
+//            LED_FR_toggle(); // Example task
+//        }
 
 
 
