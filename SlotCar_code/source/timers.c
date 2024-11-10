@@ -98,6 +98,12 @@ void init_timerA1(void)
  *      // Perform another task every 300 ms
  *      LED_FR_toggle(); // Example task
  *  }
+ *
+ *  *** DO NOT USE FOLLOWING reserved INDEXES:
+ *      0, 1, 2, 3, 4
+ *      Use only indexes => 5 for test
+ *
+ *
  */
 bool variable_delay_ms(uint8_t index, uint16_t delay_ms)
 {
