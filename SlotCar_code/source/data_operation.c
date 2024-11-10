@@ -24,7 +24,7 @@ const int16_t kernel[CONV_KERNEL_SIZE] = {0, 0, 0, -1, -1, 0, 0, 0}; // Convolut
 /*
  * Function to calculate cross-correlation
  */
-bool corrDetectNewLapStart(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize)
+bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize)
 {
     int32_t maxCorrelation = 0;
 
@@ -60,8 +60,9 @@ bool corrDetectNewLapStart(const uint16_t *referenceData, const uint16_t *correl
  * Function to collect ADC data and detect laps.
  * This function collect data that are then parsed into the correlation algorithm
  */
-void corrCollectADCData(uint16_t newADCValue)
+bool corrDetectNewLapStart(uint16_t newADCValue)
 {
+    bool corrResult = false;    //flag for detecting positive correlation results
     // If the reference data is not complete, keep collecting the first samples
     if (!referenceDataDone) {
         // Once we have collected enough samples, store them as reference data
@@ -85,11 +86,9 @@ void corrCollectADCData(uint16_t newADCValue)
                 currentDataCounter++;
             } else {
                 // run correlation
-                if (corrDetectNewLapStart(referenceData, correlationData, CORRELATION_WINDOW)) {
-                    // New lap detected, handle the event (reset FSM, etc.)
-                    //                    currentDataCounter = 0;  // Reset for new lap
-                    //                    ble_send_int32(20000000);
-                    //                    ble_send("\n");
+                if (corrPerform(referenceData, correlationData, CORRELATION_WINDOW)) {
+                    // New lap detected, handle the event
+                    corrResult = true;
                 }
                 firstCorrelationDone = true; // Mark the first lap as complete
                 currentDataCounter = 0; // Reset for collecting new lap data
@@ -160,11 +159,9 @@ void corrCollectADCData(uint16_t newADCValue)
                 #endif
                 // now correlationData[] has CORRELATION_WINDOW-SLIDING_WINDOW old samples and SLIDING_WINDOW new samples
                 // run correlation
-                if (corrDetectNewLapStart(referenceData, correlationData, CORRELATION_WINDOW)) {
-                    // New lap detected, handle the event (reset FSM, etc.)
-                    //                    currentDataCounter = 0;  // Reset for new lap
-                    //                    ble_send_int32(20000000);
-                    //                    ble_send("\n");
+                if (corrPerform(referenceData, correlationData, CORRELATION_WINDOW)) {
+                    // New lap detected, handle the event
+                    corrResult = true;
                 }
                 currentDataCounter = 0; // Reset for collecting new lap data
                 sliderData[currentDataCounter] = newADCValue; // Collect new data
@@ -173,6 +170,7 @@ void corrCollectADCData(uint16_t newADCValue)
             }
         }
     }
+    return corrResult;   // Return the final result at the end
 }
 
 /*
@@ -193,7 +191,7 @@ void corrClearBuffers(void)
 /*
  * Function to perform convolution on the ADC data
  */
-int16_t perform_convolution(uint16_t* data, uint32_t length, uint32_t index) {
+int16_t convPerform(uint16_t* data, uint32_t length, uint32_t index) {
     int16_t conv_result = 0;
     uint8_t i = 0;
 
@@ -207,20 +205,20 @@ int16_t perform_convolution(uint16_t* data, uint32_t length, uint32_t index) {
 }
 
 // Function to determine if the car is in a bend or straight section
-void analyze_track_section(uint16_t* data, uint32_t length) {
+void convAnalyzeKernel(uint16_t* data, uint32_t length) {
     uint32_t i = 0;
     uint8_t bend_count = 0;
     int16_t conv_value;
     uint8_t length_temp = 20;
 
     for (i = 0; i < length; i++) {
-        conv_value = perform_convolution(data, length, i);
+        conv_value = convPerform(data, length, i);
 //        ble_send("FINAL conv_value: ");
         ble_send_int16(conv_value);
         ble_send("\n");
 //        ble_send("\n");
 
-        // Check if conv_value exceeds CORRELATION_THRESHOLD consistently
+        // Check if conv_value exceeds CONV_THRESHOLD consistently
         if (conv_value > CONV_THRESHOLD) {
             bend_count++;
             ble_send("\nfind a HIGHT value.\n ");
