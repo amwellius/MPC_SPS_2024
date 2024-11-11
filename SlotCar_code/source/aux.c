@@ -150,61 +150,62 @@ void car_control_FSM(void)
 {
     switch (current_state) {
         case STATE_REF_LAP:
+            #ifdef FSM_STATE_DBG
             if (!temp_flag) {
                 ble_send("\n\nFSM START \nIn STATE_REF_LAP\n");
                 temp_flag = true;
             }
+            #endif
 
             // set constant speed for reference lap
             motor_pwm(PWM_LEVEL_4);
+
             // blink rear LEDs while in reference lap
-            if (variable_delay_ms(6, 300)) {
+            if (variable_delay_ms(6, 100)) {
                 LED_RR_toggle();
                 LED_RL_toggle();
             }
-            ////// tests //////
-            if (variable_delay_ms(5, 62)) {
-                if (ii<STORED_DATA_1_LENGTH) {
-                    if (corrDetectNewLapStart(stored_track_data_1[ii])) {
-//                        temp_counter++;
-//                        ble_send("Lap counter: ");
-//                        ble_send_uint16(temp_counter);
-//                        ble_send("\n");
 
-                        ii = 0;
-//                        ble_send_int32(82000000);
-//                        ble_send("\n");
+            // perform correlation every xx ms
+            if (variable_delay_ms(5, 10)) {
 
-              //****// TEMP clear buffers
-                        corrClearBuffers();
-                        state_transition(STATE_RUNNING);
-                        ii = 0;
-                        temp_flag = false;
-//                        LED_RL_toggle();
-//                        ble_send("\nShould exit STATE_REF_LAP!\n");
-                    }
-    //                ble_send("loops: ");
-    //                ble_send_uint16(ii);
-    //                ble_send("\n");
-                    ii++;
+                // get ADC results
+                z_axis = ADC_get_result(4);
+
+                #ifdef FSM_DBG_SEND_ADC
+                // Send data over UART BLUETOOTH
+                ble_send_uint16(z_axis);
+                ble_send("\n");
+                #endif
+                #ifdef FSM_DBG
+                if (corrDetectNewLapStart(feed_stored_data())) {
+                #endif
+                #ifndef FSM_DBG
+                if (corrDetectNewLapStart(z_axis)) {
+                #endif
+
+                    // BLE DBG
+//                    ble_send_int32(90000000);
+                    ble_send("\n");
+                    // reset LEDs to OFF state
+                    LED_RR_OFF();
+                    LED_RL_OFF();
+                    // go to the next state
+//                    state_transition(STATE_STOPPED);
+                    #ifdef FSM_STATE_DBG
+                    temp_flag = false;
+                    #endif
                 }
-//                if (ii == STORED_DATA_1_LENGTH)
-//                {
-//                    ble_send_int32(79500000);
-//                    ble_send("\n");
-//                    ii = 0;
-//                    corrClearBuffers();
-//    //                ble_send("\na loop thru the data samples!\n");
-//                }
             }
             break;
 
         case STATE_RUNNING:
-//            ble_send("\nIn STATE_RUNNING\n");
+            #ifdef FSM_STATE_DBG
             if (!temp_flag) {
-                ble_send("In STATE_RUNNING\n");
+//                ble_send("In STATE_RUNNING\n");
                 temp_flag = true;
             }
+            #endif
             if (variable_delay_ms(5, 200)) {
                 LED_FR_toggle();
 //                ble_send("\nIn STATE_RUNNING\n");
@@ -218,6 +219,7 @@ void car_control_FSM(void)
                     // ADC operation
                     // Get the results using the getter function
                     z_axis = stored_track_data_2[i];
+
                     switch(z_axis)
                     {
                     case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
@@ -236,10 +238,6 @@ void car_control_FSM(void)
                         motor_pwm(PWM_LEVEL_5);
                         break;
                     }
-
-                    // Send data over UART BLUETOOTH
-//                    ble_send_uint16(z_axis);
-//                    ble_send("\n");
 
                     i++;
                 }
@@ -261,7 +259,7 @@ void car_control_FSM(void)
 //            ble_send("\nIn STATE_STOPPED\n");
 
             if (!temp_flag) {
-                ble_send("In STATE_STOPPED\n");
+//                ble_send("In STATE_STOPPED\n");
                 temp_flag = true;
             }
 
@@ -270,7 +268,7 @@ void car_control_FSM(void)
             if (variable_delay_ms(6, 500)) {
                 LED_RR_toggle();
                 LED_RL_toggle();
-                ble_send("FSM reset in: ");
+//                ble_send("FSM reset in: ");
                 ble_send_uint16(20 - temp_counter);
                 ble_send("\n");
                 temp_counter++;
@@ -294,6 +292,7 @@ void car_control_FSM(void)
             break;
 
         default:
+            #ifdef FSM_STATE_DBG
             ble_send("\nUnknown State!\n");
             ble_send("State reset counter: ");
             state_counter++;
@@ -301,20 +300,47 @@ void car_control_FSM(void)
             ble_send(".\n");
             ble_send("*** reset FSM now! *** \n\n");
             state_machine_init();
+            #endif
             break;
         }
 }
 
 // Function to handle state transitions
-void state_transition(State new_state) {
+void state_transition(State new_state)
+{
+#ifdef FSM_STATE_DBG
 //    ble_send("Transitioning from ");
 //    ble_send_uint16(current_state);
 //    ble_send(" to ");
 //    ble_send_uint16(new_state);
 //    ble_send(".\n");
+#endif
     current_state = new_state;
 }
 
+/*
+ * Function to feed stored data into FSM.
+ * The first few samples from ADC are dumped. Make sure to check #define DUMP_SAMPLES in data_operations.h
+ */
+uint16_t feed_stored_data(void)
+{
+    static uint16_t counter = 0;
+
+    if (counter == STORED_DATA_1_LENGTH + 1 + DUMP_SAMPLES) {
+        corrClearBuffers();
+        counter = 0;
+        ble_send_int32(79500000);       // or any other value to indicate end of data
+        ble_send("\n");
+        return stored_track_data_1[counter];
+    }
+    // use data from data_temp_storage.h
+    if (counter<STORED_DATA_1_LENGTH + 1 + DUMP_SAMPLES) {
+        counter++;
+    }
+
+    // return data
+    return stored_track_data_1[counter - 1];
+}
 
 
 

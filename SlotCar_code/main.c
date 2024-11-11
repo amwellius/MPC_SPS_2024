@@ -41,9 +41,9 @@ int main(void)
     LED_init();
     init_timerB0();
     init_timerA1();
-//    motor_init();
-//    ADC_init();
-//    ADC_start();
+    motor_init();
+    ADC_init();
+    ADC_start();
     UART_init();
 
 
@@ -108,7 +108,7 @@ int main(void)
     //// tests //////
 
 //    uint16_t ii = 0;
-    uint8_t temp_counter = 0 ;
+    povol_TX = 1;
 
     while(1){
         if (povol_TX == 1) {
