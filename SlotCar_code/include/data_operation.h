@@ -21,7 +21,9 @@
 #define CORRELATION_WINDOW 21           // Number of samples for reference lap
 #define SLIDING_WINDOW 7                // Number of samples to slide in the window
 #define CORRELATION_THRESHOLD 81512000  // CORRELATION_THRESHOLD for cross-correlation to detect a new lap
-//#define CORR_BLE_DBG // comment out to disable BLE debug messages
+#define DUMP_SAMPLES 5                  // Specify number of fed samples into the algorithm to be dumped at the beginning
+#define CORR_BLE_DBG_REGISTERS          // comment out to disable BLE debug registers messages
+#define CORR_BLE_DBG_CORSUM             // comment out to disable BLE debug correlation sums messages
 
     /* Convolution */
 #define CONV_KERNEL_SIZE 8  // Define based on expected pattern size

@@ -10,12 +10,14 @@
 #include <msp430.h>
 
 // VARIABLES
-uint16_t currentDataCounter = 0;  // Track current number of collected samples
-bool referenceDataDone = false;  // Flag to track if first lap is complete
-bool firstCorrelationDone = false; // Flag to indicate that the first correlation is done
+uint16_t currentDataCounter = 0;              // Track current number of collected samples
+bool referenceDataDone = false;               // Flag to track if first lap is complete
+bool firstCorrelationDone = false;            // Flag to indicate that the first correlation is done
 uint16_t referenceData[CORRELATION_WINDOW];   // To store the first 100 samples as reference
-uint16_t correlationData[CORRELATION_WINDOW]; // To store the sliding window of current data
-uint16_t sliderData[SLIDING_WINDOW]; // To store the sliding window of current data
+uint16_t correlationData[CORRELATION_WINDOW]; // To store current data
+uint16_t sliderData[SLIDING_WINDOW];          // Slider data for currentData[] to get new data
+static uint8_t dump_counter = 0;              // First dump data counter
+bool CORR_BLE_DBG_REGISTERS_flag = false;     // flag
 
 const int16_t kernel[CONV_KERNEL_SIZE] = {0, 0, 0, -1, -1, 0, 0, 0}; // Convolution kernel, bends, straight sections, ...
 
@@ -48,8 +50,10 @@ bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData,
 //    ble_send("\nCorrelation max: ");
 
     // BLE SEND
-//    ble_send_int32(maxCorrelation);
-//    ble_send("\n");
+#ifdef CORR_BLE_DBG_CORSUM
+    ble_send_int32(maxCorrelation);
+    ble_send("\n");
+#endif
 
     // Check if the correlation is above the CORRELATION_THRESHOLD to detect a new lap
     return maxCorrelation > CORRELATION_THRESHOLD;
@@ -62,6 +66,23 @@ bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData,
  */
 bool corrDetectNewLapStart(uint16_t newADCValue)
 {
+    // Checker for dumping the first data samples
+    if (dump_counter < DUMP_SAMPLES) {
+        dump_counter++;       // increment counter
+        //BLE DEGUB
+        #ifdef CORR_BLE_DBG_REGISTERS
+        if (!CORR_BLE_DBG_REGISTERS_flag) {
+            ble_send("DBG: Dumping first samples: ");
+            ble_send_uint16(DUMP_SAMPLES);
+            ble_send(": \n");
+            CORR_BLE_DBG_REGISTERS_flag = true;
+        }
+        ble_send_uint16(newADCValue);
+        ble_send("\n");
+        #endif
+        return false;           // return false to ignore DUMP_SAMPLES samples
+        }
+
     bool corrResult = false;    //flag for detecting positive correlation results
     // If the reference data is not complete, keep collecting the first samples
     if (!referenceDataDone) {
@@ -94,7 +115,7 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 currentDataCounter = 0; // Reset for collecting new lap data
 
                 //BLE DEGUB
-                #ifdef CORR_BLE_DBG
+                #ifdef CORR_BLE_DBG_REGISTERS
                 ble_send("DBG:\tRef\tCur\n");
                 uint8_t ii = 0;
                 for (ii = 0; ii < CORRELATION_WINDOW; ii++) {
@@ -109,7 +130,7 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 // Increment the counter
                 currentDataCounter++;
                 //BLE DEGUB
-                #ifdef CORR_BLE_DBG
+                #ifdef CORR_BLE_DBG_REGISTERS
                 ble_send("DBG: First correlation done!\n");
                 #endif
             }
@@ -122,7 +143,7 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 currentDataCounter++;
             } else {
                 //BLE DEGUB
-                #ifdef CORR_BLE_DBG
+                #ifdef CORR_BLE_DBG_REGISTERS
                 ble_send("DBG: Slider data before sliding current data:\n");
                 uint8_t ii = 0;
                 for (ii = 0; ii < SLIDING_WINDOW; ii++) {
@@ -143,7 +164,7 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                     correlationData[CORRELATION_WINDOW - SLIDING_WINDOW + i] = sliderData[i];
                 }
                 //BLE DEGUB
-                #ifdef CORR_BLE_DBG
+                #ifdef CORR_BLE_DBG_REGISTERS
                 ble_send("DBG: Slider window full, sliding and running correlation!\n");
                 ble_send("DBG: Data after sliding\n");
                 ble_send("DBG:\tRef\tCur\tSld\n");
@@ -178,9 +199,10 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
  */
 void corrClearBuffers(void)
 {
-    currentDataCounter = 0;  // Track current number of collected samples
-    referenceDataDone = false;  // Flag to track if first lap is complete
-    firstCorrelationDone = false; // Flag to indicate that the first correlation is done
+    currentDataCounter = 0;         // Track current number of collected samples
+    referenceDataDone = false;      // Flag to track if first lap is complete
+    firstCorrelationDone = false;   // Flag to indicate that the first correlation is done
+    dump_counter = 0;               // First dump data counter
 
     // clear arrays
     memset(referenceData, 0, sizeof(referenceData));
@@ -209,7 +231,6 @@ void convAnalyzeKernel(uint16_t* data, uint32_t length) {
     uint32_t i = 0;
     uint8_t bend_count = 0;
     int16_t conv_value;
-    uint8_t length_temp = 20;
 
     for (i = 0; i < length; i++) {
         conv_value = convPerform(data, length, i);
