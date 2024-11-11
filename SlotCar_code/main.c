@@ -109,9 +109,11 @@ int main(void)
 
 //    uint16_t ii = 0;
     uint8_t temp_counter = 0 ;
+
     while(1){
-        /* IF IN DEBUG MODE */
-        #ifdef MASTER_BLE_DBG
+        if (povol_TX == 1) {
+            /* IF IN DEBUG MODE */
+            #ifdef MASTER_BLE_DBG
                 if (!MASTER_BLE_DBG_flag) {
                     ble_send("\t **** DEBUG MODE ****\n");
                     MASTER_BLE_DBG_flag = true;
@@ -119,11 +121,11 @@ int main(void)
                 if (variable_delay_ms(0, 120)) {
                 LED_FL_toggle(); // Example task
                 }
-        #endif
-        /* IF IN DEBUG MODE */
+            #endif
+            /* IF IN DEBUG MODE */
 
-
-        car_control_FSM();
+            car_control_FSM();
+//
 //        if (variable_delay_ms(5, 10)) {
 //        // Perform task every xxx ms
 ////            LED_FR_toggle(); // Example task
@@ -149,7 +151,8 @@ int main(void)
 //                corrClearBuffers();
 ////                ble_send("\na loop thru the data samples!\n");
 //            }
-//        }
+//
+        }
     }
 
 
