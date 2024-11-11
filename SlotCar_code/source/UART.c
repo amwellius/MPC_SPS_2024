@@ -115,11 +115,9 @@ void ble_send_int16(int16_t number) {
 void ble_send_int32(int32_t number) {
     char buffer[12];  // Buffer to hold ASCII string (max 10 digits + sign + null terminator)
     int i = 0;
-    int is_negative = 0;
 
     // Handle negative numbers
     if (number < 0) {
-        is_negative = 1;
         number = -number;  // Take the absolute value
         ble_send("-");     // Send the negative sign
     }
