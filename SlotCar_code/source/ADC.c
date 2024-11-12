@@ -16,6 +16,8 @@ volatile uint16_t ADC_raw_results[5];  // Define the array
 volatile uint16_t ADC_filtered_results[5];
 
 // FUNCTIONS
+
+// Inits ADC
 void ADC_init(void)
 {
     P6SEL |= 0xF8;      // P6.3 - P6.7 as ADC
@@ -31,7 +33,7 @@ void ADC_init(void)
     ADC12CTL0 |= ADC12ENC;                    // Enable conversions
 }
 
-
+// Starts conversions
 void ADC_start(void)
 {
     /*
@@ -40,6 +42,17 @@ void ADC_start(void)
      *
      */
     ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
+}
+
+// Stops ADC
+/*
+ * use ADC_init() followd by ADC_start when starting the conversions again
+ */
+void ADC_stop(void)
+{
+    ADC12CTL0 &= ~ADC12SC;                  // Stop any ongoing conversions
+    ADC12CTL0 &= ~ADC12ENC;                 // Disable conversions
+    ADC12CTL0 &= ~ADC12ON;                  // Turn off the ADC module
 }
 
 uint16_t ADC_get_result(uint8_t index)

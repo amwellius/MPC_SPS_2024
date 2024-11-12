@@ -17,9 +17,10 @@
 #define filter_ON      // Comment this out to disable the filter
 
 // FUNCTIONS
-void ADC_init(void);
-void ADC_start(void);
-uint16_t ADC_get_result(uint8_t index);  // Declare the getter
+void ADC_init(void);                        // inits the ADC
+void ADC_start(void);                       // starts ADC conversions
+void ADC_stop(void);                        // stops ADC. Needed to call ADC_init and ADC_start to start the ADC again
+uint16_t ADC_get_result(uint8_t index);     // Declare the getter
 int32_t moving_average(void);
 
 
