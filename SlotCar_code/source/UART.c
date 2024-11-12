@@ -3,6 +3,8 @@
  *
  *  Created on: 28. 9. 2021
  *      Author: 
+ * Modified on: 12/November/2024
+ *      Author: xkosik09
  */
 
 // INCLUDES
@@ -10,7 +12,9 @@
 #include <stdio.h>  // Include for sprintf
 
 // VARIABLES
-volatile uint8_t povol_TX;
+volatile uint8_t allow_TX;
+char RX_buffer[MAX_RX_BUFFER_SIZE];  // Buffer to store received characters
+unsigned int RX_index = 0;        // Current position in the buffer
 
 // FUNCTIONS
 
@@ -141,28 +145,66 @@ void ble_send_int32(int32_t number) {
 }
 
 // **************************************INTERUPTS************************************** //
+//#pragma vector = USCI_A1_VECTOR
+//__interrupt void USCI_A1_ISR(void) {
+//    unsigned char RX_data;
+//
+//
+//    switch(__even_in_range(UCA1IV,4))
+//    {
+//    case 0x00: break;   // Vector 0: No interrupts
+//    case 0x02:          // Vector 2: Data received; Interrupt Flag: UCRXIFG; Interrupt
+//         RX_data = (uint8_t)UCA1RXBUF;
+//         if (UCA1RXBUF == 'z') // 'z' received?
+//                {
+//                  // pri prijatem znaku 'z' povol vysilaci komunikaci
+//                 allow_TX = 1;
+//                  }
+//         else if (UCA1RXBUF == 'y')
+//         {
+//             allow_TX = 0; //zakaz komunikaci
+//         }
+//    break;
+//    case 0x04: break;  // Vector 4: Transmit buffer empty; Interrupt Flag: UCTXIFG
+//    default: break;
+//    }
+//}
+
 #pragma vector = USCI_A1_VECTOR
 __interrupt void USCI_A1_ISR(void) {
-    unsigned char RX_data;
+    char RX_data;
 
+    switch(__even_in_range(UCA1IV, 4)) {
+        case 0x00: break;   // No interrupt
 
-    switch(__even_in_range(UCA1IV,4))
-    {
-    case 0x00: break;   // Vector 0: No interrupts
-    case 0x02:          // Vector 2: Data received; Interrupt Flag: UCRXIFG; Interrupt
-         RX_data = (uint8_t)UCA1RXBUF;
-         if (UCA1RXBUF == 'z') // 'z' received?
-                {
-                  // pri prijatem znaku 'z' povol vysilaci komunikaci
-                 povol_TX = 1;
-                  }
-         else if (UCA1RXBUF == 'y')
-         {
-             povol_TX = 0; //zakaz komunikaci
-         }
-    break;
-    case 0x04: break;  // Vector 4: Transmit buffer empty; Interrupt Flag: UCTXIFG
-    default: break;
+        case 0x02:          // Data received
+            RX_data = UCA1RXBUF;  // Read received data
+
+            if (RX_data == '\n') {  // Check for end of command
+                RX_buffer[RX_index] = '\0';  // Null-terminate the string
+
+                // Check for commands
+                if (strcmp(RX_buffer, "start") == 0) {
+                    allow_TX = 1;   // Enable transmission
+                } else if (strcmp(RX_buffer, "stop") == 0) {
+                    allow_TX = 0;   // Disable transmission
+                }
+                /* Add more commands here */
+
+                // Reset buffer for the next command
+                RX_index = 0;
+            } else {
+                // Store character in buffer if there is space
+                if (RX_index < MAX_RX_BUFFER_SIZE - 1) {
+                    RX_buffer[RX_index++] = RX_data;
+                } else {
+                    RX_index = 0;  // Reset if buffer overflows
+                }
+            }
+            break;
+
+        case 0x04: break;  // Transmit buffer empty
+        default: break;
     }
 }
 

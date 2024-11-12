@@ -14,9 +14,10 @@
 #include <msp430.h>
 
 // DEFINITIONS
+#define MAX_RX_BUFFER_SIZE 10
 
 // VARIABLES
-extern volatile uint8_t povol_TX;
+extern volatile uint8_t allow_TX;
 
 // FUNCTIONS
 void UART_init(void);                       // initialization and initiation communication -- default baud rate is 19600
