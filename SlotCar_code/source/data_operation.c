@@ -8,6 +8,7 @@
 // INCLUDES
 #include "include/data_operation.h"
 #include <msp430.h>
+#include "include/timers.h"
 
 // VARIABLES
 uint16_t currentDataCounter = 0;              // Track current number of collected samples
@@ -16,8 +17,8 @@ bool firstCorrelationDone = false;            // Flag to indicate that the first
 uint16_t referenceData[CORRELATION_WINDOW];   // To store the first 100 samples as reference
 uint16_t correlationData[CORRELATION_WINDOW]; // To store current data
 uint16_t sliderData[SLIDING_WINDOW];          // Slider data for currentData[] to get new data
-static uint8_t dump_counter = 0;              // First dump data counter
-bool CORR_BLE_DBG_REGISTERS_flag = false;     // flag
+uint8_t dump_counter = 0;              // First dump data counter
+uint16_t sample_counter = 0;
 
 const int16_t kernel[CONV_KERNEL_SIZE] = {0, 0, 0, -1, -1, 0, 0, 0}; // Convolution kernel, bends, straight sections, ...
 
@@ -37,17 +38,15 @@ bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData,
 //    ble_send("\n\tcurrent\treference\tsum\n");
     for (i = 0; i < windowSize; i++) {
         correlationSum += (int32_t)correlationData[i] * (int32_t)referenceData[i];
-//        ble_send("\n\t ");
-//        ble_send_int32(correlationData[i]);
-//        ble_send("\t");
-//        ble_send_int32(referenceData[i]);
-//        ble_send("\t\t");
-//        ble_send_int32(correlationSum);
-
     }
 
     maxCorrelation = correlationSum;
-//    ble_send("\nCorrelation max: ");
+
+#ifdef CORR_BLE_DBG_REGISTERS
+    ble_send("DBG: Corr sum: ");
+    ble_send_int32(maxCorrelation);
+    ble_send("\n");
+#endif
 
     // BLE SEND
 #ifdef CORR_BLE_DBG_CORSUM
@@ -59,6 +58,79 @@ bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData,
     return maxCorrelation > CORRELATION_THRESHOLD;
 }
 
+bool exactMatch(void)
+{
+    #define MATCH_THRESHOLD 80
+    int16_t exactMatchScore = 0;
+    uint16_t i = 0;
+    for (i = 0; i < CORRELATION_WINDOW; i++) {
+        if (correlationData[i] == referenceData[i]) {
+            exactMatchScore++;
+        }
+    }
+    ble_send_uint16(exactMatchScore);
+    ble_send("\n");
+    if (exactMatchScore > MATCH_THRESHOLD) {
+        return true; // New lap detected
+    }
+    return false;
+}
+
+/////test functions///////////////////correlationData//////////changed to referenceData/////////////////////////////
+bool detect_lap_start(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize) {
+    int32_t correlation_sum = 0;
+    int16_t mean_reference = 0;
+    int16_t mean_current = 0;
+    uint8_t i = 0;
+
+    // Calculate means
+//    ble_send("DBG:\treff \tcurr\n");
+    for (i = 0; i < windowSize; i++) {
+//        ble_send("\t");
+//        ble_send_uint16(referenceData[i]);
+//        ble_send("\t");
+//        ble_send_uint16(correlationData[i]);
+//        ble_send("\n");
+
+        mean_reference += referenceData[i];
+        mean_current += correlationData[i];
+    }
+    mean_reference /= windowSize;
+    mean_current /= windowSize;
+
+//    ble_send("DBG: MEAN\n\treff \tcurr:\n\t");
+//    ble_send_uint16(mean_reference);
+//    ble_send("\t");
+//    ble_send_uint16(mean_current);
+//    ble_send("\n");
+
+    // Compute the cross-correlation score
+    for (i = 0; i < windowSize; i++) {
+        correlation_sum += ((int32_t)correlationData[i] - mean_current) * ((int32_t)referenceData[i] - mean_reference);
+    }
+
+    // normalize correlation sum
+    correlation_sum /= windowSize;
+    // BLE DBG
+//    ble_send("DBG: Corr sum: ");
+    ble_send_int32(correlation_sum);
+    ble_send("\n");
+
+
+
+    // Check if correlation exceeds threshold
+    if (correlation_sum > CORRELATION_THRESHOLD) {
+        // ble dbg
+//        ble_send("DBG: Corr sum: ");
+//        ble_send_int32(1000);
+//        ble_send("\n");
+        return true; // New lap detected
+    }
+    return false;  // No new lap detected
+}
+
+/////test functions/////////////////////////////////////////////////////////////////////////////////////
+
 //
 /*
  * Function to collect ADC data and detect laps.
@@ -66,22 +138,38 @@ bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData,
  */
 bool corrDetectNewLapStart(uint16_t newADCValue)
 {
+    // function to stop the code after various delay
+//    ble_send("ADC current data: ");
+//    ble_send_uint16(newADCValue);
+//    ble_send("\n");
+//    if (variable_delay_ms(7, 500)) {
+//        while(1){
+//        }
+//    }
+    // result: we got 34 ADC samples in a 1 second; then 18 in 0.5 second
+    // this means we need more data - wider window
+
+    // samples counter (starts from 0 as the saved data do)
+#ifdef CORR_BLE_DBG_SAMP_COUNT
+//    static uint16_t sample_counter = 0;
+    ble_send("DBG: Sample count: ");
+    ble_send_uint16(sample_counter);
+    ble_send("\n");
+    sample_counter++;
+
+#endif
     // Checker for dumping the first data samples
     if (dump_counter < DUMP_SAMPLES) {
         dump_counter++;       // increment counter
         //BLE DEGUB
         #ifdef CORR_BLE_DBG_REGISTERS
-        if (!CORR_BLE_DBG_REGISTERS_flag) {
-            ble_send("DBG: Dumping first samples: ");
-            ble_send_uint16(DUMP_SAMPLES);
-            ble_send(": \n");
-            CORR_BLE_DBG_REGISTERS_flag = true;
-        }
-        ble_send_uint16(newADCValue);
-        ble_send("\n");
+            ble_send("DBG: Dumping sample: ");
+            ble_send("\t");
+            ble_send_uint16(newADCValue);
+            ble_send("\n");
         #endif
         return false;           // return false to ignore DUMP_SAMPLES samples
-        }
+    }
 
     bool corrResult = false;    //flag for detecting positive correlation results
     // If the reference data is not complete, keep collecting the first samples
@@ -107,10 +195,10 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 currentDataCounter++;
             } else {
                 // run correlation
-                if (corrPerform(referenceData, correlationData, CORRELATION_WINDOW)) {
+//                if (detect_lap_start(referenceData, correlationData, CORRELATION_WINDOW)) {
                     // New lap detected, handle the event
                     corrResult = true;
-                }
+//                }
                 firstCorrelationDone = true; // Mark the first lap as complete
                 currentDataCounter = 0; // Reset for collecting new lap data
 
@@ -141,6 +229,11 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 sliderData[currentDataCounter] = newADCValue;
                 // Increment the counter
                 currentDataCounter++;
+
+//                // Send data over UART BLUETOOTH
+//                ble_send_uint16(sliderData[currentDataCounter -1 ]);
+//                ble_send("\n");
+
             } else {
                 //BLE DEGUB
                 #ifdef CORR_BLE_DBG_REGISTERS
@@ -174,16 +267,43 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                     ble_send("\t");
                     ble_send_uint16(correlationData[ii]);
                     ble_send("\t");
-                    ble_send_uint16(sliderData[ii]);
-                    ble_send("\n");
+                    if (ii < SLIDING_WINDOW){
+                        ble_send_uint16(sliderData[ii]);
+                        ble_send("\n");
+                    }
+                    else {
+                        ble_send("NaN\n");
+                    }
                 }
                 #endif
                 // now correlationData[] has CORRELATION_WINDOW-SLIDING_WINDOW old samples and SLIDING_WINDOW new samples
                 // run correlation
-                if (corrPerform(referenceData, correlationData, CORRELATION_WINDOW)) {
-                    // New lap detected, handle the event
-                    corrResult = true;
+                if (exactMatch()){
+                    ble_send("exact match!\n");
                 }
+//                if (detect_lap_start(referenceData, correlationData, CORRELATION_WINDOW)) {
+                    // New lap detected, handle the event
+
+                    //ble DBG
+//                    ble_send("DBG:\tRef\tCur\tSld\n");
+//                    uint8_t ii = 0;
+//                    for (ii = 0; ii < CORRELATION_WINDOW; ii++) {
+//                        ble_send("\t");
+//                        ble_send_uint16(referenceData[ii]);
+//                        ble_send("\t");
+//                        ble_send_uint16(correlationData[ii]);
+//                        ble_send("\t");
+//                        if (ii < SLIDING_WINDOW){
+//                            ble_send_uint16(sliderData[ii]);
+//                            ble_send("\n");
+//                        }
+//                        else {
+//                            ble_send("NaN\n");
+//                        }
+//
+//                    }
+                    corrResult = true;
+//                }
                 currentDataCounter = 0; // Reset for collecting new lap data
                 sliderData[currentDataCounter] = newADCValue; // Collect new data
                 // Increment the counter
@@ -203,10 +323,11 @@ void corrClearBuffers(void)
     referenceDataDone = false;      // Flag to track if first lap is complete
     firstCorrelationDone = false;   // Flag to indicate that the first correlation is done
     dump_counter = 0;               // First dump data counter
+    sample_counter = 0;
 
     // clear arrays
     memset(referenceData, 0, sizeof(referenceData));
-    memset(referenceData, 0, sizeof(referenceData));
+    memset(correlationData, 0, sizeof(correlationData));
     memset(sliderData, 0, sizeof(sliderData));
 }
 
