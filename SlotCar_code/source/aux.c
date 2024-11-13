@@ -126,6 +126,7 @@ void car_control_simple(void)
     }
 }
 
+/***************************************************************************************************************/
 /*
  * A Finite State Machine for controlling the motor PWM speed.
  * In main.c, first initialize the FSM. Then use car_control_FSM in the while look to run indefinitely.
@@ -133,7 +134,11 @@ void car_control_simple(void)
  */
 
 static State current_state = STATE_REF_LAP;
-static uint8_t state_counter = 0;
+
+#ifdef FSM_STATE_DBG
+    static uint8_t state_counter = 0;
+#endif
+
 bool temp_flag = false;
 
 // Initialize the state machine
@@ -146,6 +151,7 @@ void state_machine_init(void) {
 uint16_t ii = 0;
 uint16_t i = 0;
 uint16_t z_axis = 0;
+
 void car_control_FSM(void)
 {
     switch (current_state) {
@@ -158,7 +164,7 @@ void car_control_FSM(void)
             #endif
 
             // set constant speed for reference lap
-            motor_pwm(PWM_LEVEL_4);
+            motor_pwm(PWM_LEVEL_3);
 
             // blink rear LEDs while in reference lap
             if (variable_delay_ms(6, 100)) {
@@ -178,18 +184,21 @@ void car_control_FSM(void)
                 ble_send("\n");
                 #endif
                 #ifdef FSM_DBG
-                if (corrDetectNewLapStart(feed_stored_data())) {
+                if (corrDetectNewLapStart(feed_stored_data(stored_track_data_3, STORED_DATA_3_LENGTH))) {
                 #endif
                 #ifndef FSM_DBG
                 if (corrDetectNewLapStart(z_axis)) {
                 #endif
 
                     // BLE DBG
-//                    ble_send_int32(90000000);
-                    ble_send("\n");
+//                    ble_send_int32(850000000);
+//                    ble_send("\n");
+//                    ble_send("**** Correlation found ****\n");
                     // reset LEDs to OFF state
                     LED_RR_OFF();
                     LED_RL_OFF();
+//                    lap_counter();
+
                     // go to the next state
 //                    state_transition(STATE_STOPPED);
                     #ifdef FSM_STATE_DBG
@@ -322,24 +331,33 @@ void state_transition(State new_state)
  * Function to feed stored data into FSM.
  * The first few samples from ADC are dumped. Make sure to check #define DUMP_SAMPLES in data_operations.h
  */
-uint16_t feed_stored_data(void)
-{
+uint16_t feed_stored_data(const uint16_t *storedData, uint16_t dataLength) {
     static uint16_t counter = 0;
+    uint16_t feedData = 0;
 
-    if (counter == STORED_DATA_1_LENGTH + 1 + DUMP_SAMPLES) {
-        corrClearBuffers();
-        counter = 0;
-        ble_send_int32(79500000);       // or any other value to indicate end of data
-        ble_send("\n");
-        return stored_track_data_1[counter];
-    }
-    // use data from data_temp_storage.h
-    if (counter<STORED_DATA_1_LENGTH + 1 + DUMP_SAMPLES) {
+    // Increment counter if within range
+    if (counter <= dataLength) {
+        feedData = storedData[counter];
         counter++;
     }
+    else { // the data ends here
+        counter = 0;
+        corrClearBuffers();                     // clear correlation buffers
+        ble_send("DGB: Buffers cleared!\n");    // Optional debug output
+        feedData = storedData[counter];
+        counter++;
+    }
+    return feedData; // Return the current data value
+}
 
-    // return data
-    return stored_track_data_1[counter - 1];
+// A function to print laps when called
+void lap_counter(void)
+{
+    static uint8_t lap_counter = 0;
+    lap_counter++;
+    ble_send("Lap counter: ");
+    ble_send_uint16(lap_counter);
+    ble_send("\n");
 }
 
 
