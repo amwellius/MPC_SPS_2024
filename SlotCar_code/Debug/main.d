@@ -33,6 +33,9 @@ main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/i
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/stdarg.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/string.h
 main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/xlocale/_string.h
+main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/math.h
+main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/_defs.h
+main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/machine/_limits.h
 
 ../main.c:
 
@@ -99,4 +102,10 @@ main.obj: /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/i
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/string.h:
 
 /Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/xlocale/_string.h:
+
+/Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/math.h:
+
+/Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/_defs.h:
+
+/Applications/ti/ccs1280/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/machine/_limits.h:
 
