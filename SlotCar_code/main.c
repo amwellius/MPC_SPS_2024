@@ -47,12 +47,6 @@ int main(void)
     UART_init();
 
 
-    //// tests //////
-//    uint16_t i = 0;
-//    ble_send("\n \t *** STARTING STATE MACHINE ***\n\n");
-//    state_machine_init();  // Initialize the state machine
-    //// tests //////
-
 //    while (1)
 //    {
         //// tests //////
@@ -104,15 +98,13 @@ int main(void)
 
 //    car_control_FSM();
 
-
-    //// tests //////
-
-//    uint16_t ii = 0;
+    // set 1 to print BLE on start-up
     allow_TX = 1;
 
-    while(1){
-        /* IF IN DEBUG MODE */
+    while(1)
+    {
         #ifdef MASTER_BLE_DBG
+        /* IF IN DEBUG MODE */
             if (!MASTER_BLE_DBG_flag) {
                 ble_send("\t **** DEBUG MODE ****\n");
                 MASTER_BLE_DBG_flag = true;
@@ -121,7 +113,7 @@ int main(void)
             LED_FL_toggle(); // Example task
             }
         #endif
-        /* IF IN DEBUG MODE */
+
         if (allow_TX == 1) {
 //            LED_FR_ON();
             car_control_FSM();
@@ -132,52 +124,10 @@ int main(void)
 //            motor_brake();
         }
         }
-//        if (variable_delay_ms(4, 400)) {
-//            ble_send_uint16(ADC_get_result(4));
-//            ble_send("\n");
-//        }
-
-//
-//        if (variable_delay_ms(5, 10)) {
-//        // Perform task every xxx ms
-////            LED_FR_toggle(); // Example task
-//            if (ii<STORED_DATA_1_LENGTH) {
-//                if (corrDetectNewLapStart(stored_track_data_1[ii])) {
-//                    temp_counter++;
-////                    ble_send("Lap counter: ");
-////                    ble_send_uint16(temp_counter);
-////                    ble_send("\n");
-//                    ble_send_int32(82000000);
-//                    ble_send("\n");
-//                }
-////                ble_send("loops: ");
-////                ble_send_uint16(ii);
-////                ble_send("\n");
-//                ii++;
-//            }
-//            if (ii == STORED_DATA_1_LENGTH)
-//            {
-//                ble_send_int32(79500000);
-//                ble_send("\n");
-//                ii = 0;
-//                corrClearBuffers();
-////                ble_send("\na loop thru the data samples!\n");
-//            }
-//
 
 
 
-    ////// tests //////
-
-
-
-
-
-
-
-
-
-    // infinite loop
+    // OLD infinite loop
     while (1)
     {
 //        car_control_simple();
