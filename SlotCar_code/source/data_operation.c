@@ -17,7 +17,7 @@ bool firstCorrelationDone = false;            // Flag to indicate that the first
 uint16_t referenceData[CORRELATION_WINDOW];   // To store the first 100 samples as reference
 uint16_t correlationData[CORRELATION_WINDOW]; // To store current data
 uint16_t sliderData[SLIDING_WINDOW];          // Slider data for currentData[] to get new data
-uint8_t dump_counter = 0;              // First dump data counter
+uint16_t dump_counter = 0;              // First dump data counter
 uint16_t sample_counter = 0;
 
 const int16_t kernel[CONV_KERNEL_SIZE] = {0, 0, 0, -1, -1, 0, 0, 0}; // Convolution kernel, bends, straight sections, ...
@@ -25,84 +25,21 @@ const int16_t kernel[CONV_KERNEL_SIZE] = {0, 0, 0, -1, -1, 0, 0, 0}; // Convolut
 // FUNCTIONS
 
 /*
- * Function to calculate cross-correlation
+ * Function to calculate cross-correlation with mean windows and normalization
  */
-bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize)
-{
-    int32_t maxCorrelation = 0;
-
-    // Compute the correlation for the whole window
-    int32_t correlationSum = 0;
-    uint16_t i;
-//    ble_send("\n\t*** DATA FOR CORRELATION: ***\n ");
-//    ble_send("\n\tcurrent\treference\tsum\n");
-    for (i = 0; i < windowSize; i++) {
-        correlationSum += (int32_t)correlationData[i] * (int32_t)referenceData[i];
-    }
-
-    maxCorrelation = correlationSum;
-
-#ifdef CORR_BLE_DBG_REGISTERS
-    ble_send("DBG: Corr sum: ");
-    ble_send_int32(maxCorrelation);
-    ble_send("\n");
-#endif
-
-    // BLE SEND
-#ifdef CORR_BLE_DBG_CORSUM
-    ble_send_int32(maxCorrelation);
-    ble_send("\n");
-#endif
-
-    // Check if the correlation is above the CORRELATION_THRESHOLD to detect a new lap
-    return maxCorrelation > CORRELATION_THRESHOLD;
-}
-
-bool exactMatch(void)
-{
-    #define MATCH_THRESHOLD 80
-    int16_t exactMatchScore = 0;
-    uint16_t i = 0;
-    for (i = 0; i < CORRELATION_WINDOW; i++) {
-        if (correlationData[i] == referenceData[i]) {
-            exactMatchScore++;
-        }
-    }
-    ble_send_uint16(exactMatchScore);
-    ble_send("\n");
-    if (exactMatchScore > MATCH_THRESHOLD) {
-        return true; // New lap detected
-    }
-    return false;
-}
-
-/////test functions///////////////////correlationData//////////changed to referenceData/////////////////////////////
-bool detect_lap_start(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize) {
+bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize) {
     int32_t correlation_sum = 0;
     int16_t mean_reference = 0;
     int16_t mean_current = 0;
     uint8_t i = 0;
 
     // Calculate means
-//    ble_send("DBG:\treff \tcurr\n");
     for (i = 0; i < windowSize; i++) {
-//        ble_send("\t");
-//        ble_send_uint16(referenceData[i]);
-//        ble_send("\t");
-//        ble_send_uint16(correlationData[i]);
-//        ble_send("\n");
-
         mean_reference += referenceData[i];
         mean_current += correlationData[i];
     }
     mean_reference /= windowSize;
     mean_current /= windowSize;
-
-//    ble_send("DBG: MEAN\n\treff \tcurr:\n\t");
-//    ble_send_uint16(mean_reference);
-//    ble_send("\t");
-//    ble_send_uint16(mean_current);
-//    ble_send("\n");
 
     // Compute the cross-correlation score
     for (i = 0; i < windowSize; i++) {
@@ -111,27 +48,77 @@ bool detect_lap_start(const uint16_t *referenceData, const uint16_t *correlation
 
     // normalize correlation sum
     correlation_sum /= windowSize;
+
     // BLE DBG
-//    ble_send("DBG: Corr sum: ");
-    ble_send_int32(correlation_sum);
-    ble_send("\n");
-
-
+    #ifdef CORR_BLE_DBG_REGISTERS
+        ble_send("DBG: Corr sum: ");
+        ble_send_int32(correlation_sum);
+        ble_send("\n");
+    #endif
+    #ifdef CORR_BLE_DBG_CORSUM
+        ble_send_int32(correlation_sum);
+        ble_send("\n");
+    #endif
 
     // Check if correlation exceeds threshold
     if (correlation_sum > CORRELATION_THRESHOLD) {
-        // ble dbg
-//        ble_send("DBG: Corr sum: ");
-//        ble_send_int32(1000);
-//        ble_send("\n");
         return true; // New lap detected
     }
     return false;  // No new lap detected
 }
 
-/////test functions/////////////////////////////////////////////////////////////////////////////////////
+/*
+ * Exact Match Scoring
+ * Counts the exact number of matches between referenceData and correlationData.
+ * Returns true if the number of exact matches exceeds the MATCH_THRESHOLD.
+ */
+bool corrExactMatch(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize) {
+    int16_t exactMatchScore = 0;
+    uint16_t i;
 
-//
+    for (i = 0; i < windowSize; i++) {
+        if (correlationData[i] == referenceData[i]) {
+            exactMatchScore++;
+        }
+    }
+
+    if (exactMatchScore > CORRELATION_MATCH_THRESHOLD) {
+        return true; // New lap detected
+    }
+    return false;
+}
+
+/*
+ * Sum of Absolute Differences (SAD)
+ * Computes the sum of absolute differences between referenceData and correlationData.
+ * Returns true if the SAD score is below a specified threshold.
+ */
+bool corrSAD(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize) {
+    int32_t sadScore = 0;
+    uint16_t i;
+
+    for (i = 0; i < windowSize; i++) {
+        sadScore += abs((int32_t)correlationData[i] - (int32_t)referenceData[i]);
+    }
+
+    if (sadScore < SAD_THRESHOLD) {
+        return true; // New lap detected
+    }
+
+    // BLE DBG
+    #ifdef CORR_BLE_DBG_REGISTERS
+        ble_send("DBG: Corr sum: ");
+        ble_send_int32(sadScore);
+        ble_send("\n");
+    #endif
+    #ifdef CORR_BLE_DBG_CORSUM
+        ble_send_int32(sadScore);
+        ble_send("\n");
+    #endif
+
+    return false;
+}
+
 /*
  * Function to collect ADC data and detect laps.
  * This function collect data that are then parsed into the correlation algorithm
@@ -278,9 +265,11 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 #endif
                 // now correlationData[] has CORRELATION_WINDOW-SLIDING_WINDOW old samples and SLIDING_WINDOW new samples
                 // run correlation
-                if (exactMatch()){
-                    ble_send("exact match!\n");
-                }
+//                if (exactMatch()){
+//                    ble_send("exact match!\n");
+//                }
+                corrSAD();
+//                normCrossCorr();
 //                if (detect_lap_start(referenceData, correlationData, CORRELATION_WINDOW)) {
                     // New lap detected, handle the event
 
