@@ -42,8 +42,8 @@ int main(void)
     init_timerB0();
     init_timerA1();
     motor_init();
-    ADC_init();
-    ADC_start();
+//    ADC_init();
+//    ADC_start();
     UART_init();
 
 
@@ -108,23 +108,35 @@ int main(void)
     //// tests //////
 
 //    uint16_t ii = 0;
-    povol_TX = 1;
+    allow_TX = 1;
 
     while(1){
-        if (povol_TX == 1) {
-            /* IF IN DEBUG MODE */
-            #ifdef MASTER_BLE_DBG
-                if (!MASTER_BLE_DBG_flag) {
-                    ble_send("\t **** DEBUG MODE ****\n");
-                    MASTER_BLE_DBG_flag = true;
-                }
-                if (variable_delay_ms(0, 120)) {
-                LED_FL_toggle(); // Example task
-                }
-            #endif
-            /* IF IN DEBUG MODE */
-
+        /* IF IN DEBUG MODE */
+        #ifdef MASTER_BLE_DBG
+            if (!MASTER_BLE_DBG_flag) {
+                ble_send("\t **** DEBUG MODE ****\n");
+                MASTER_BLE_DBG_flag = true;
+            }
+            if (variable_delay_ms(0, 120)) {
+            LED_FL_toggle(); // Example task
+            }
+        #endif
+        /* IF IN DEBUG MODE */
+        if (allow_TX == 1) {
+//            LED_FR_ON();
             car_control_FSM();
+        }
+        else
+        {
+//            LED_FR_OFF();
+//            motor_brake();
+        }
+        }
+//        if (variable_delay_ms(4, 400)) {
+//            ble_send_uint16(ADC_get_result(4));
+//            ble_send("\n");
+//        }
+
 //
 //        if (variable_delay_ms(5, 10)) {
 //        // Perform task every xxx ms
@@ -152,8 +164,7 @@ int main(void)
 ////                ble_send("\na loop thru the data samples!\n");
 //            }
 //
-        }
-    }
+
 
 
     ////// tests //////
@@ -205,10 +216,6 @@ int main(void)
 
         // 1000ms interrupt
         if (flag_1000ms) {
-            if (povol_TX == 1)
-            {
-            }
-
             flag_1000ms = 0;
         }
 
