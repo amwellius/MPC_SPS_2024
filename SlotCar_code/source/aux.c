@@ -167,7 +167,7 @@ void car_control_FSM(void)
             motor_pwm(PWM_LEVEL_3);
 
             // blink rear LEDs while in reference lap
-            if (variable_delay_ms(6, 100)) {
+            if (variable_delay_ms(6, 300)) {
                 LED_RR_toggle();
                 LED_RL_toggle();
             }
@@ -195,8 +195,8 @@ void car_control_FSM(void)
 //                    ble_send("\n");
 //                    ble_send("**** Correlation found ****\n");
                     // reset LEDs to OFF state
-                    LED_RR_OFF();
-                    LED_RL_OFF();
+//                    LED_RR_OFF();
+//                    LED_RL_OFF();
 //                    lap_counter();
 
                     // go to the next state
