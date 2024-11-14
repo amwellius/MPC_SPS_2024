@@ -36,7 +36,7 @@
 typedef enum {
     PWM_LEVEL_1  = 300, // 25%
     PWM_LEVEL_2  = 280, // 30%
-    PWM_LEVEL_3  = 240, // 40%
+    PWM_LEVEL_3  = 240, // 40%      // 1 m/s
     PWM_LEVEL_4  = 200, // 50%
     PWM_LEVEL_5  = 160, // 60%
     PWM_LEVEL_6  = 120, // 70%
