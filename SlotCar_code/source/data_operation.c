@@ -17,14 +17,14 @@ bool firstCorrelationDone = false;            // Flag to indicate that the first
 uint16_t referenceData[CORRELATION_WINDOW];   // To store the first 100 samples as reference
 uint16_t correlationData[CORRELATION_WINDOW]; // To store current data
 uint16_t sliderData[SLIDING_WINDOW];          // Slider data for currentData[] to get new data
-uint16_t dump_counter = 0;              // First dump data counter
+uint16_t dump_counter = 0;                    // First dump data counter
 uint16_t sample_counter = 0;
 
 const int16_t kernel[CONV_KERNEL_SIZE] = {0, 0, 0, -1, -1, 0, 0, 0}; // Convolution kernel, bends, straight sections, ...
 
 // FUNCTIONS
 
-/*
+/********************************************************************************************************************
  * Function to calculate cross-correlation with mean windows and normalization
  */
 bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData, uint16_t windowSize) {
@@ -67,7 +67,7 @@ bool corrPerform(const uint16_t *referenceData, const uint16_t *correlationData,
     return false;  // No new lap detected
 }
 
-/*
+/********************************************************************************************************************
  * Exact Match Scoring
  * Counts the exact number of matches between referenceData and correlationData.
  * Returns true if the number of exact matches exceeds the MATCH_THRESHOLD.
@@ -88,7 +88,7 @@ bool corrExactMatch(const uint16_t *referenceData, const uint16_t *correlationDa
     return false;
 }
 
-/*
+/********************************************************************************************************************
  * Sum of Absolute Differences (SAD)
  * Computes the sum of absolute differences between referenceData and correlationData.
  * Returns true if the SAD score is below a specified threshold.
@@ -99,10 +99,6 @@ bool corrSAD(const uint16_t *referenceData, const uint16_t *correlationData, uin
 
     for (i = 0; i < windowSize; i++) {
         sadScore += abs((int32_t)correlationData[i] - (int32_t)referenceData[i]);
-    }
-
-    if (sadScore < SAD_THRESHOLD) {
-        return true; // New lap detected
     }
 
     // BLE DBG
@@ -116,39 +112,31 @@ bool corrSAD(const uint16_t *referenceData, const uint16_t *correlationData, uin
         ble_send("\n");
     #endif
 
+    if (sadScore < CORRELATION_SAD_THRESHOLD) {
+        return true; // New lap detected
+    }
+
     return false;
 }
 
-/*
+/********************************************************************************************************************
  * Function to collect ADC data and detect laps.
  * This function collect data that are then parsed into the correlation algorithm
  */
 bool corrDetectNewLapStart(uint16_t newADCValue)
 {
-    // function to stop the code after various delay
-//    ble_send("ADC current data: ");
-//    ble_send_uint16(newADCValue);
-//    ble_send("\n");
-//    if (variable_delay_ms(7, 500)) {
-//        while(1){
-//        }
-//    }
-    // result: we got 34 ADC samples in a 1 second; then 18 in 0.5 second
-    // this means we need more data - wider window
-
+    #ifdef CORR_BLE_DBG_SAMP_COUNT
     // samples counter (starts from 0 as the saved data do)
-#ifdef CORR_BLE_DBG_SAMP_COUNT
-//    static uint16_t sample_counter = 0;
-    ble_send("DBG: Sample count: ");
-    ble_send_uint16(sample_counter);
-    ble_send("\n");
-    sample_counter++;
+        ble_send("DBG: Sample count: ");
+        ble_send_uint16(sample_counter);
+        ble_send("\n");
+        sample_counter++;
 
-#endif
+    #endif
     // Checker for dumping the first data samples
     if (dump_counter < DUMP_SAMPLES) {
         dump_counter++;       // increment counter
-        //BLE DEGUB
+        //BLE DEBUG
         #ifdef CORR_BLE_DBG_REGISTERS
             ble_send("DBG: Dumping sample: ");
             ble_send("\t");
@@ -182,14 +170,14 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 currentDataCounter++;
             } else {
                 // run correlation
-//                if (detect_lap_start(referenceData, correlationData, CORRELATION_WINDOW)) {
+                if (corrSAD(referenceData, correlationData, CORRELATION_WINDOW)) {
                     // New lap detected, handle the event
-                    corrResult = true;
-//                }
+                    corrResult = true;  // set flag to indicate positive correlation
+                }
                 firstCorrelationDone = true; // Mark the first lap as complete
                 currentDataCounter = 0; // Reset for collecting new lap data
 
-                //BLE DEGUB
+                //BLE DEBUG
                 #ifdef CORR_BLE_DBG_REGISTERS
                 ble_send("DBG:\tRef\tCur\n");
                 uint8_t ii = 0;
@@ -201,10 +189,12 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                     ble_send("\n");
                 }
                 #endif
+
                 sliderData[currentDataCounter] = newADCValue; // Collect save new data into slider data and so on
                 // Increment the counter
                 currentDataCounter++;
-                //BLE DEGUB
+
+                //BLE DEBUG
                 #ifdef CORR_BLE_DBG_REGISTERS
                 ble_send("DBG: First correlation done!\n");
                 #endif
@@ -217,12 +207,8 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 // Increment the counter
                 currentDataCounter++;
 
-//                // Send data over UART BLUETOOTH
-//                ble_send_uint16(sliderData[currentDataCounter -1 ]);
-//                ble_send("\n");
-
-            } else {
-                //BLE DEGUB
+            } else { // go here after the sliding window is full
+                //BLE DEBUG
                 #ifdef CORR_BLE_DBG_REGISTERS
                 ble_send("DBG: Slider data before sliding current data:\n");
                 uint8_t ii = 0;
@@ -243,7 +229,7 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                     // Use the actual ADC value for each new sample
                     correlationData[CORRELATION_WINDOW - SLIDING_WINDOW + i] = sliderData[i];
                 }
-                //BLE DEGUB
+                //BLE DEBUG
                 #ifdef CORR_BLE_DBG_REGISTERS
                 ble_send("DBG: Slider window full, sliding and running correlation!\n");
                 ble_send("DBG: Data after sliding\n");
@@ -263,36 +249,18 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                     }
                 }
                 #endif
-                // now correlationData[] has CORRELATION_WINDOW-SLIDING_WINDOW old samples and SLIDING_WINDOW new samples
-                // run correlation
-//                if (exactMatch()){
-//                    ble_send("exact match!\n");
-//                }
-                corrSAD();
-//                normCrossCorr();
-//                if (detect_lap_start(referenceData, correlationData, CORRELATION_WINDOW)) {
-                    // New lap detected, handle the event
 
-                    //ble DBG
-//                    ble_send("DBG:\tRef\tCur\tSld\n");
-//                    uint8_t ii = 0;
-//                    for (ii = 0; ii < CORRELATION_WINDOW; ii++) {
-//                        ble_send("\t");
-//                        ble_send_uint16(referenceData[ii]);
-//                        ble_send("\t");
-//                        ble_send_uint16(correlationData[ii]);
-//                        ble_send("\t");
-//                        if (ii < SLIDING_WINDOW){
-//                            ble_send_uint16(sliderData[ii]);
-//                            ble_send("\n");
-//                        }
-//                        else {
-//                            ble_send("NaN\n");
-//                        }
-//
-//                    }
-                    corrResult = true;
-//                }
+                // run correlation
+                if (corrSAD(referenceData, correlationData, CORRELATION_WINDOW)) {
+                    // New lap detected, handle the event
+                   // BLE DBG
+                    #ifdef CORR_BLE_DBG_REGISTERS
+                    ble_send("DBG:Correlation TRUE\n");
+                    #endif
+                    ble_send("DBG:Correlation TRUE\n");
+
+                    corrResult = true;      // set flag to indicate positive correlation
+                }
                 currentDataCounter = 0; // Reset for collecting new lap data
                 sliderData[currentDataCounter] = newADCValue; // Collect new data
                 // Increment the counter
@@ -303,7 +271,7 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
     return corrResult;   // Return the final result at the end
 }
 
-/*
+/********************************************************************************************************************
  * Function to clean correlation buffers and variables in case of a need of starting from scratch
  */
 void corrClearBuffers(void)
@@ -320,7 +288,7 @@ void corrClearBuffers(void)
     memset(sliderData, 0, sizeof(sliderData));
 }
 
-/*
+/********************************************************************************************************************
  * Function to perform convolution on the ADC data
  */
 int16_t convPerform(uint16_t* data, uint32_t length, uint32_t index) {
