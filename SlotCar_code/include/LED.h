@@ -11,6 +11,7 @@
 // INCLUDES
 #include "stdint.h"
 #include <msp430.h>
+#include <stdbool.h>
 
 // DEFINITIONS
 // LED ports definition
@@ -48,6 +49,10 @@
 // FUNCTIONS
 void LED_init(void);
 void led_flash_all(uint8_t const n); // number of flashes
+void led_brake(void);
+
+//////
+extern volatile unsigned char restart_counter;
 
 
 #endif /* LED_H_ */

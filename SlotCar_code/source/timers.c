@@ -8,6 +8,7 @@
 // INCLUDES
 #include "include/timers.h"
 #include <msp430.h>
+#include "include/LED.h"
 
 // VARIABLES
 volatile unsigned char flag_1ms = 0;            // Define flag_1ms
@@ -171,6 +172,7 @@ __interrupt void Timer_B0(void)
 __interrupt void Timer_A1(void)
 {
     static uint8_t  overflow_count6 = 0; // Define overflow_count4
+    static uint16_t  temp_counter = 0;
 
     overflow_count5++;                   // Increment overflow counter 5 every 1ms for the various delay function
     overflow_count6++;                   // Increment overflow counter 6
@@ -179,6 +181,27 @@ __interrupt void Timer_A1(void)
         flag_1ms = 1;                    // Set flag for 1 ms
         overflow_count6 = 0;             // Reset counter
     }
+
+    // temp counter for brakes
+    bool static start_counting = false;
+
+    if (restart_counter) {
+        temp_counter = 0;
+        restart_counter = 0;
+        start_counting = true;
+
+    }
+
+    if (start_counting) {
+        temp_counter++;
+        if (temp_counter >= 400) {
+            start_counting = false;
+            LED_RR_OFF();
+            LED_RL_OFF();
+        }
+    }
+
+
 }
 
 

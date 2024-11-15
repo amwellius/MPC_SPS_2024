@@ -7,6 +7,9 @@
 
 // INCLUDES
 #include "include/LED.h"
+#include "include/timers.h"
+
+volatile unsigned char restart_counter = 0;
 
 // FUNCTIONS
 void LED_init(void)
@@ -38,5 +41,21 @@ void led_flash_all(uint8_t n)
         LED_RL_toggle();
         __delay_cycles(2000000); // blocking delay
     }
+}
+
+// turn rear LEDs on to indicate braking. Turn the LEDs off after xx ms to indicate releasing brakes
+void led_brake(void)
+{
+    // turn LEDs on on each call
+    LED_RR_ON();
+    LED_RL_ON();
+    restart_counter = 1;
+
+    // this does not work properly hence commented out
+    // turn LEDs off after xx ms to indicate brakes released
+//    if (variable_delay_ms(9, 300)) {
+//        LED_RR_OFF();
+//        LED_RL_OFF();
+//    }
 }
 
