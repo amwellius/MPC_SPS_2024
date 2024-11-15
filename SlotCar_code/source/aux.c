@@ -20,6 +20,7 @@
 
 // FUNCTIONS
 
+/***************************************************************************************************************/
 /*
  * Function for very simple controlling of the car speed according to the data from the ADC.
  * The ADC data is processed every ~62.5ms
@@ -129,42 +130,53 @@ void car_control_simple(void)
 /***************************************************************************************************************/
 /*
  * A Finite State Machine for controlling the motor PWM speed.
- * In main.c, first initialize the FSM. Then use car_control_FSM in the while look to run indefinitely.
+ * In main.c, first initialize the FSM. Then use car_control_FSM in the while loop to run indefinitely.
  *
  */
 
 static State current_state = STATE_REF_LAP;
-
-#ifdef FSM_STATE_DBG
-    static uint8_t state_counter = 0;
-#endif
-
-bool temp_flag = false;
+static bool init_FSM_flag = true;
+static bool state_FSM_flag1= true;
+static bool state_FSM_flag2= true;
+static bool state_FSM_flag3= true;
+static bool state_FSM_flag4= true;
 
 // Initialize the state machine
 void state_machine_init(void) {
+    // set flags to true
+    init_FSM_flag   = true;
+    #ifdef FSM_STATE_DBG
+    state_FSM_flag1 = true;
+    state_FSM_flag2 = true;
+    state_FSM_flag3 = true;
+    state_FSM_flag4 = true;
+    #endif
+
     current_state = STATE_REF_LAP;
-    ble_send("State Machine Initialized: STATE_INIT\n");
+    ble_send("\nState Machine Initialized: STATE_INIT\n");
 }
 
 // Function to run the state machine logic
-uint16_t ii = 0;
-uint16_t i = 0;
-uint16_t z_axis = 0;
-
 void car_control_FSM(void)
 {
+    // init FSM only the first call
+    if (init_FSM_flag) {
+        state_machine_init();
+        init_FSM_flag = false;
+    }
+
+    uint16_t z_axis = 0;
     switch (current_state) {
         case STATE_REF_LAP:
             #ifdef FSM_STATE_DBG
-            if (!temp_flag) {
-                ble_send("\n\nFSM START \nIn STATE_REF_LAP\n");
-                temp_flag = true;
+            if (state_FSM_flag1) {
+                ble_send("In STATE_REF_LAP\n");
+                state_FSM_flag1 = false;
             }
             #endif
 
             // set constant speed for reference lap
-            motor_pwm(PWM_LEVEL_3);
+            motor_pwm(PWM_LEVEL_3); // means 1ms
 
             // blink rear LEDs while in reference lap
             if (variable_delay_ms(6, 300)) {
@@ -189,144 +201,197 @@ void car_control_FSM(void)
                 #ifndef FSM_DBG
                 if (corrDetectNewLapStart(z_axis)) {
                 #endif
+                    #ifdef FSM_STATE_DBG
+                    ble_send("**** Correlation found ****\n");
+                    #endif
 
-                    // BLE DBG
-//                    ble_send_int32(850000000);
-//                    ble_send("\n");
-//                    ble_send("**** Correlation found ****\n");
-                    // reset LEDs to OFF state
-//                    LED_RR_OFF();
-//                    LED_RL_OFF();
-//                    lap_counter();
+                    //reset LEDs to OFF state
+                    LED_RR_OFF();
+                    LED_RL_OFF();
+                    lap_counter();  // count laps function
 
                     // go to the next state
 //                    state_transition(STATE_STOPPED);
-                    #ifdef FSM_STATE_DBG
-                    temp_flag = false;
-                    #endif
+                    state_transition(STATE_RUNNING);
                 }
             }
             break;
 
         case STATE_RUNNING:
             #ifdef FSM_STATE_DBG
-            if (!temp_flag) {
-//                ble_send("In STATE_RUNNING\n");
-                temp_flag = true;
+            if (state_FSM_flag2) {
+                ble_send("In STATE_RUNNING\n");
+                state_FSM_flag2 = false;
             }
             #endif
-            if (variable_delay_ms(5, 200)) {
-                LED_FR_toggle();
-//                ble_send("\nIn STATE_RUNNING\n");
-            }
 
-            if (flag_62ms)
-            {
-                // go thru saved data
-                if (i<STORED_DATA_2_LENGTH)
+            // set flags for turns
+            static bool right_flag = true;
+            static bool left_flag = true;
+
+            // adjust the time hence samples taken every second with variable delays
+            if (flag_62ms) {
+                #ifdef FSM_DBG
+                z_axis = feed_stored_data(stored_track_data_3, STORED_DATA_3_LENGTH);
+                #endif
+                #ifndef FSM_DBG
+                z_axis = ADC_get_result(4);
+                #endif
+
+                switch(z_axis)
                 {
-                    // ADC operation
-                    // Get the results using the getter function
-                    z_axis = stored_track_data_2[i];
+                case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
+                    LED_FR_ON();
+                    LED_FL_OFF();
 
-                    switch(z_axis)
-                    {
-                    case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
-                        LED_RR_ON();
-                        LED_RL_OFF();
-                        motor_pwm(PWM_LEVEL_4);
-                        break;
-                    case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
-                        LED_RR_OFF();
-                        LED_RL_ON();
-                        motor_pwm(PWM_LEVEL_4);
-                        break;
-                    default:
-                        LED_RL_OFF();
-                        LED_RR_OFF();
-                        motor_pwm(PWM_LEVEL_5);
-                        break;
+
+                    ble_send("left turn\n");
+                    if (right_flag) {
+                        led_brake();
+                        left_flag = true;
+                        ble_send("**left turn first time\n");
+                        right_flag = false;
                     }
 
-                    i++;
+
+
+                    // switch on rear LEDs for xx ms to indicate braking
+//                    if (variable_delay_ms(7, 300)) {
+//                        LED_RR_ON();
+//                        LED_RL_ON();
+//                    }
+
+                    motor_pwm(PWM_LEVEL_4);
+                    break;
+                case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
+                    LED_FR_OFF();
+                    LED_FL_ON();
+
+                    ble_send("left turn\n");
+                    // set flag false
+                    if (left_flag) {
+                        led_brake();
+                        right_flag = true;
+                        ble_send("**left turn first time\n");
+                        left_flag = false;
+                    }
+
+//                    led_brake();
+
+                    // switch on rear LEDs for xx ms to indicate braking
+//                    if (variable_delay_ms(7, 300)) {
+//                        LED_RR_ON();
+//                        LED_RL_ON();
+//                    }
+
+                    motor_pwm(PWM_LEVEL_4);
+                    break;
+                default:
+                    LED_FL_OFF();
+                    LED_FR_OFF();
+
+                    ble_send("going straight\n");
+
+                    right_flag = true;
+                    left_flag = true;
+
+
+                    motor_pwm(PWM_LEVEL_5);
+                    break;
                 }
                 flag_62ms = 0;
-                if (i==STORED_DATA_2_LENGTH){
-                    state_transition(STATE_STOPPED);
-                    temp_flag = false;
-                    i = 0;
-                    LED_FR_OFF();
-                }
             }
+            // switch off rear LEDs after xx ms to indicate release braking
+//            if (variable_delay_ms(7, 300)) {
+//                LED_RR_OFF();
+//                LED_RL_OFF();
+//            }
 
-//            ble_send("\nToggle FR led.\n");
-//            LED_FR_toggle();
-//            state_transition(STATE_ERROR);
             break;
 
         case STATE_STOPPED:
-//            ble_send("\nIn STATE_STOPPED\n");
-
-            if (!temp_flag) {
-//                ble_send("In STATE_STOPPED\n");
-                temp_flag = true;
+            #ifdef FSM_STATE_DBG
+            if (state_FSM_flag3) {
+                ble_send("In STATE_STOPPED\n");
+                state_FSM_flag3 = false;
             }
+            #endif
 
-            static uint8_t temp_counter = 0;
             // blink rear LEDs when in stopped lap
-            if (variable_delay_ms(6, 500)) {
+            if (variable_delay_ms(6, 800)) {
                 LED_RR_toggle();
                 LED_RL_toggle();
-//                ble_send("FSM reset in: ");
-                ble_send_uint16(20 - temp_counter);
+
+                #ifdef FSM_STATE_DBG
+                // after 30 seconds go back to Ref_lap
+                static uint8_t temp_counter = 0;
+                ble_send("FSM reset in: ");
+                ble_send_uint16(5 - temp_counter);
                 ble_send("\n");
                 temp_counter++;
-            }
-            // after 30 seconds go back to Ref_lap
-            if (temp_counter == 20){
-                state_transition(STATE_REF_LAP);
-                temp_counter = 0;
-                temp_flag = false;
+
+                if (temp_counter == 5){
+                    state_machine_reset();
+                    temp_counter = 0;
+                }
+                #endif
             }
 
+            /*Set condition to move into next state */
 
-            // Conditions to move to INIT, ERROR, etc.
-//            state_transition(10); // unknown state
+//            state_transition(10); // unknown state -> move to ERROR
             break;
 
         case STATE_ERROR:
-            ble_send("\nIn STATE_ERROR\n");
+            #ifdef FSM_STATE_DBG
+            if (state_FSM_flag4) {
+                ble_send("In STATE_ERROR!\n");
+                state_FSM_flag4 = false;
+            }
+            #endif
+
             // Error handling or recovery
-            state_transition(STATE_STOPPED);
+//            state_transition(STATE_STOPPED);
             break;
 
         default:
             #ifdef FSM_STATE_DBG
             ble_send("\nUnknown State!\n");
-            ble_send("State reset counter: ");
-            state_counter++;
-            ble_send_uint16(state_counter);
-            ble_send(".\n");
-            ble_send("*** reset FSM now! *** \n\n");
-            state_machine_init();
+            // Error handling or recovery
             #endif
             break;
-        }
+    }
 }
 
 // Function to handle state transitions
 void state_transition(State new_state)
 {
-#ifdef FSM_STATE_DBG
-//    ble_send("Transitioning from ");
-//    ble_send_uint16(current_state);
-//    ble_send(" to ");
-//    ble_send_uint16(new_state);
-//    ble_send(".\n");
-#endif
-    current_state = new_state;
+    #ifdef FSM_STATE_DBG
+    ble_send("Transitioning from ");
+    ble_send_uint16(current_state);
+    ble_send(" to ");
+    ble_send_uint16(new_state);
+    ble_send(".\n");
+    #endif
+    current_state = new_state; // go to the next state
 }
 
+// Function to restart state machine
+void state_machine_reset(void)
+{
+    // set flags to true
+    init_FSM_flag   = true;
+    #ifdef FSM_STATE_DBG
+    state_FSM_flag1 = true;
+    state_FSM_flag2 = true;
+    state_FSM_flag3 = true;
+    state_FSM_flag4 = true;
+    #endif
+
+    ble_send("State Machine Restarting...\n");
+}
+
+/***************************************************************************************************************/
 /*
  * Function to feed stored data into FSM.
  * The first few samples from ADC are dumped. Make sure to check #define DUMP_SAMPLES in data_operations.h
@@ -349,7 +414,7 @@ uint16_t feed_stored_data(const uint16_t *storedData, uint16_t dataLength) {
     }
     return feedData; // Return the current data value
 }
-
+/***************************************************************************************************************/
 // A function to print laps when called
 void lap_counter(void)
 {
