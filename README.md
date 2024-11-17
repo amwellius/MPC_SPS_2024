@@ -1,8 +1,9 @@
 TO DO LIST:
   - frame ADC values (1950 up to 1980, etc, maybe even right in the filter)
+  - add function to set true only after a number of positive correlations (#define)
   - clean up the code
 
-CURRENTLY IN PROGRESS:
+CURRENTLY IN PROCESS:
   - fiding a new lap start
   - FSM for car control
   - function to indicate braking properly 
