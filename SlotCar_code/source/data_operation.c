@@ -257,7 +257,6 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                     #ifdef CORR_BLE_DBG_REGISTERS
                     ble_send("DBG:Correlation TRUE\n");
                     #endif
-                    ble_send("DBG:Correlation TRUE\n");
 
                     corrResult = true;      // set flag to indicate positive correlation
                 }

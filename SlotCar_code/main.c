@@ -37,68 +37,16 @@ int main(void)
     _BIS_SR(GIE);               // some interrupts as well
     __enable_interrupt();
 
-
+    // INITS
     LED_init();
     init_timerB0();
     init_timerA1();
     motor_init();
-//    ADC_init();
-//    ADC_start();
+    ADC_init();
+    ADC_start();
     UART_init();
 
-
-//    while (1)
-//    {
-        //// tests //////
-//        car_control_FSM();
-        //// tests //////
-
-//        if (variable_delay_ms(x, 1000)) {
-////            LED_FR_toggle(); // Example task
-//        }
-//
-//
-//        if (variable_delay_ms(x, 62)) {
-//
-//            if (i<SAMPLE_COUNT)
-//            {
-////                ble_send_uint16(adc_data[i]);
-////                ble_send("\n");
-//                i++;
-//            }
-//
-//            switch(adc_data[i])
-//            {
-//            case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
-//                LED_RR_ON();
-//                LED_RL_OFF();
-//                motor_pwm(PWM_LEVEL_4);
-//                break;
-//            case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
-//                LED_RR_OFF();
-//                LED_RL_ON();
-//                motor_pwm(PWM_LEVEL_4);
-//                break;
-//            default:
-//                LED_RL_OFF();
-//                LED_RR_OFF();
-//                motor_pwm(PWM_LEVEL_5);
-//                break;
-//            }
-//
-//            if (i==SAMPLE_COUNT)
-//            {
-//                i = 0;
-//            }
-//            LED_FL_toggle();
-//
-//        }
-
-//    }
-
-//    car_control_FSM();
-
-    // set 1 to print BLE on start-up
+    // set 1 to start on start-up
     allow_TX = 1;
 
     while(1)
@@ -110,7 +58,7 @@ int main(void)
                 MASTER_BLE_DBG_flag = true;
             }
             if (variable_delay_ms(0, 120)) {
-            LED_FL_toggle(); // Example task
+//            LED_FL_toggle(); // Blink LED to indicate software debug mode
             }
         #endif
 
@@ -121,7 +69,7 @@ int main(void)
         else
         {
 //            LED_FR_OFF();
-//            motor_brake();
+            motor_brake();
         }
         }
 

@@ -136,10 +136,12 @@ void car_control_simple(void)
 
 static State current_state = STATE_REF_LAP;
 static bool init_FSM_flag = true;
+#ifdef FSM_STATE_DBG
 static bool state_FSM_flag1= true;
 static bool state_FSM_flag2= true;
 static bool state_FSM_flag3= true;
 static bool state_FSM_flag4= true;
+#endif
 
 // Initialize the state machine
 void state_machine_init(void) {
@@ -168,6 +170,7 @@ void car_control_FSM(void)
     uint16_t z_axis = 0;
     switch (current_state) {
         case STATE_REF_LAP:
+        {
             #ifdef FSM_STATE_DBG
             if (state_FSM_flag1) {
                 ble_send("In STATE_REF_LAP\n");
@@ -176,7 +179,7 @@ void car_control_FSM(void)
             #endif
 
             // set constant speed for reference lap
-            motor_pwm(PWM_LEVEL_3); // means 1ms
+            motor_pwm(PWM_LEVEL_3); // means ~1 m/s
 
             // blink rear LEDs while in reference lap
             if (variable_delay_ms(6, 300)) {
@@ -185,7 +188,10 @@ void car_control_FSM(void)
             }
 
             // perform correlation every xx ms
-            if (variable_delay_ms(5, 10)) {
+            // use 10ms for stored data
+            // test usage of 62ms for ADC to match the speed control
+                // if CORRELATION_WINDOW=100, then this takes samples of 5 seconds of the track
+            if (variable_delay_ms(5, 62)) {
 
                 // get ADC results
                 z_axis = ADC_get_result(4);
@@ -196,7 +202,7 @@ void car_control_FSM(void)
                 ble_send("\n");
                 #endif
                 #ifdef FSM_DBG
-                if (corrDetectNewLapStart(feed_stored_data(stored_track_data_3, STORED_DATA_3_LENGTH))) {
+                if (corrDetectNewLapStart(feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH))) {
                 #endif
                 #ifndef FSM_DBG
                 if (corrDetectNewLapStart(z_axis)) {
@@ -216,8 +222,9 @@ void car_control_FSM(void)
                 }
             }
             break;
-
+        }
         case STATE_RUNNING:
+        {
             #ifdef FSM_STATE_DBG
             if (state_FSM_flag2) {
                 ble_send("In STATE_RUNNING\n");
@@ -226,13 +233,13 @@ void car_control_FSM(void)
             #endif
 
             // set flags for turns
-            static bool right_flag = true;
-            static bool left_flag = true;
+            static bool right_turn_flag = true;
+            static bool left_turn_flag = true;
 
             // adjust the time hence samples taken every second with variable delays
             if (flag_62ms) {
                 #ifdef FSM_DBG
-                z_axis = feed_stored_data(stored_track_data_3, STORED_DATA_3_LENGTH);
+                z_axis = feed_stored_data(stored_track_data_4, STORED_DATA_4_LENGTH);
                 #endif
                 #ifndef FSM_DBG
                 z_axis = ADC_get_result(4);
@@ -244,72 +251,60 @@ void car_control_FSM(void)
                     LED_FR_ON();
                     LED_FL_OFF();
 
-
-                    ble_send("left turn\n");
-                    if (right_flag) {
+                    // Call led_brake() to indicate slowing down
+                    ble_send("right turn\n");
+                    if (right_turn_flag) {
                         led_brake();
-                        left_flag = true;
-                        ble_send("**left turn first time\n");
-                        right_flag = false;
+                        left_turn_flag = true;
+                        ble_send("**right turn first time\n");
+                        right_turn_flag = false;
                     }
-
-
-
-                    // switch on rear LEDs for xx ms to indicate braking
-//                    if (variable_delay_ms(7, 300)) {
-//                        LED_RR_ON();
-//                        LED_RL_ON();
-//                    }
 
                     motor_pwm(PWM_LEVEL_4);
                     break;
+
                 case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
                     LED_FR_OFF();
                     LED_FL_ON();
 
+                    // Call led_brake() to indicate slowing down
                     ble_send("left turn\n");
                     // set flag false
-                    if (left_flag) {
+                    if (left_turn_flag) {
                         led_brake();
-                        right_flag = true;
+                        right_turn_flag = true;
                         ble_send("**left turn first time\n");
-                        left_flag = false;
+                        left_turn_flag = false;
                     }
-
-//                    led_brake();
-
-                    // switch on rear LEDs for xx ms to indicate braking
-//                    if (variable_delay_ms(7, 300)) {
-//                        LED_RR_ON();
-//                        LED_RL_ON();
-//                    }
 
                     motor_pwm(PWM_LEVEL_4);
                     break;
+
+
+                /* Invoke a rebuilt of this part!!
+                 * The problem lays in changing from turn to turn. The ADC reads values inside the straight-sections region.
+                 * This calls the led_brake() function to often when the speed is not and should not be changed.
+                 */
                 default:
                     LED_FL_OFF();
                     LED_FR_OFF();
 
+                    // debug msg
                     ble_send("going straight\n");
 
-                    right_flag = true;
-                    left_flag = true;
-
+                    // set flags for led_brake() true
+                    right_turn_flag = true;
+                    left_turn_flag = true;
 
                     motor_pwm(PWM_LEVEL_5);
                     break;
                 }
                 flag_62ms = 0;
             }
-            // switch off rear LEDs after xx ms to indicate release braking
-//            if (variable_delay_ms(7, 300)) {
-//                LED_RR_OFF();
-//                LED_RL_OFF();
-//            }
-
             break;
-
+        }
         case STATE_STOPPED:
+        {
             #ifdef FSM_STATE_DBG
             if (state_FSM_flag3) {
                 ble_send("In STATE_STOPPED\n");
@@ -341,8 +336,9 @@ void car_control_FSM(void)
 
 //            state_transition(10); // unknown state -> move to ERROR
             break;
-
+        }
         case STATE_ERROR:
+        {
             #ifdef FSM_STATE_DBG
             if (state_FSM_flag4) {
                 ble_send("In STATE_ERROR!\n");
@@ -353,13 +349,15 @@ void car_control_FSM(void)
             // Error handling or recovery
 //            state_transition(STATE_STOPPED);
             break;
-
+        }
         default:
+        {
             #ifdef FSM_STATE_DBG
             ble_send("\nUnknown State!\n");
             // Error handling or recovery
             #endif
             break;
+        }
     }
 }
 

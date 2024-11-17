@@ -16,16 +16,9 @@
 //static bool init_FSM_flag;
 
     /* DEBUG */
-#define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
-#define FSM_DBG                   // comment out to disable BLE DBG messages of FSM DEBUG
+//#define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
+//#define FSM_DBG                   // comment out to disable BLE DBG messages of FSM DEBUG
 //#define FSM_DBG_SEND_ADC          // comment out to disable BLE DBG messages of FSM SEND ADC DEBUG
-
-#ifdef FSM_STATE_DBG
-//static bool state_FSM_flag1;
-//static bool state_FSM_flag2;
-//static bool state_FSM_flag3;
-//static bool state_FSM_flag4;
-#endif
 
 // Define the states for the state machine
 typedef enum {
