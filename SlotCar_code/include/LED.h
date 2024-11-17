@@ -52,7 +52,7 @@ void led_flash_all(uint8_t const n); // number of flashes
 void led_brake(void);
 
 //////
-extern volatile unsigned char restart_counter;
+extern volatile unsigned char flag_brakes_applied;
 
 
 #endif /* LED_H_ */

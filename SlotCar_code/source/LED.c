@@ -9,7 +9,7 @@
 #include "include/LED.h"
 #include "include/timers.h"
 
-volatile unsigned char restart_counter = 0;
+volatile unsigned char flag_brakes_applied = false;
 
 // FUNCTIONS
 void LED_init(void)
@@ -49,13 +49,8 @@ void led_brake(void)
     // turn LEDs on on each call
     LED_RR_ON();
     LED_RL_ON();
-    restart_counter = 1;
-
-    // this does not work properly hence commented out
-    // turn LEDs off after xx ms to indicate brakes released
-//    if (variable_delay_ms(9, 300)) {
-//        LED_RR_OFF();
-//        LED_RL_OFF();
-//    }
+    // restart the flag every time the function is called.
+    // This means setting the flag true restarts the interrupt counter to zero.
+    flag_brakes_applied = true;
 }
 

@@ -11,12 +11,13 @@
 #include "include/LED.h"
 
 // VARIABLES
-volatile unsigned char flag_1ms = 0;            // Define flag_1ms
-volatile unsigned char flag_31ms = 0;           // Define flag_31.75ms
-volatile unsigned char flag_62ms = 0;           // Define flag_62.5ms
-volatile unsigned char flag_500ms = 0;          // Define flag_500ms
-volatile unsigned char flag_1000ms = 0;         // Define flag_1000ms
-static uint16_t overflow_count5 = 0;            // Incremented every 1 ms
+volatile unsigned char flag_1ms = 0;                // Define flag_1ms
+volatile unsigned char flag_31ms = 0;               // Define flag_31.75ms
+volatile unsigned char flag_62ms = 0;               // Define flag_62.5ms
+volatile unsigned char flag_500ms = 0;              // Define flag_500ms
+volatile unsigned char flag_1000ms = 0;             // Define flag_1000ms
+static uint16_t overflow_count5 = 0;                // Incremented every 1 ms
+bool static brake_release_counter_start = false;    // Reset counter for brake release
 
 /* main clock 16 MHz
  * This function doesn’t set up the timer directly but ensures your system clock is running at 16 MHz.
@@ -171,8 +172,8 @@ __interrupt void Timer_B0(void)
 #pragma vector = TIMER1_A0_VECTOR
 __interrupt void Timer_A1(void)
 {
-    static uint8_t  overflow_count6 = 0; // Define overflow_count4
-    static uint16_t  temp_counter = 0;
+    static uint8_t overflow_count6 = 0;         // Define overflow_count4
+    static uint16_t brake_release_counter = 0;  // Define counter for brake release functionality
 
     overflow_count5++;                   // Increment overflow counter 5 every 1ms for the various delay function
     overflow_count6++;                   // Increment overflow counter 6
@@ -182,26 +183,23 @@ __interrupt void Timer_A1(void)
         overflow_count6 = 0;             // Reset counter
     }
 
-    // temp counter for brakes
-    bool static start_counting = false;
-
-    if (restart_counter) {
-        temp_counter = 0;
-        restart_counter = 0;
-        start_counting = true;
-
+    // Brake release flag checker
+    // If the flag_brakes_applied is set TRUE during the counting, the counter brake_release_counter is reset to count from 0.
+    if (flag_brakes_applied) {
+        brake_release_counter = 0;
+        flag_brakes_applied = false;
+        brake_release_counter_start = true;
     }
-
-    if (start_counting) {
-        temp_counter++;
-        if (temp_counter >= 400) {
-            start_counting = false;
+    // Brake release starter and counter
+    // switch on rear LEDs for BRAKE_RELEASE_LEDS_MS ms to indicate braking. Then switch off the LEDs.
+    if (brake_release_counter_start) {
+        brake_release_counter++;
+        if (brake_release_counter >= BRAKE_RELEASE_LEDS_MS) {
+            brake_release_counter_start = false;
             LED_RR_OFF();
             LED_RL_OFF();
         }
     }
-
-
 }
 
 

@@ -21,12 +21,15 @@
 #define one_sec             32  // 32 = Approximately 1 seconds
 #define max_variable_delays 10  // Define maximum delays for the variable delay function
 
+#define BRAKE_RELEASE_LEDS_MS 400   // Define time in ms to release LEDs after releasing brakes
+
 // VARIABLES
 extern volatile unsigned char flag_1ms;          // Declare flag_1ms as extern
 extern volatile unsigned char flag_31ms;         // Declare flag_31.75ms as extern
 extern volatile unsigned char flag_62ms;         // Declare flag_62.5ms as extern
 extern volatile unsigned char flag_500ms;        // Declare flag_500ms as extern
 extern volatile unsigned char flag_1000ms;       // Declare flag_1000ms as extern
+bool static brake_release_counter_start;         // Declare flag to restart brake LEDs counter
 
 // FUNCTIONS
 void initClockTo16MHz(void);                      // main clock 16MHz
