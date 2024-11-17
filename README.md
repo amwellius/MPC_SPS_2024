@@ -5,6 +5,7 @@ TO DO LIST:
 CURRENTLY IN PROGRESS:
   - fiding a new lap start
   - FSM for car control
+  - function to indicate braking properly 
 
 ALREADY IMPLEMENTED:
   - basic functionality
