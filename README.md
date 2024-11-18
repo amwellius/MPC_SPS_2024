@@ -1,6 +1,7 @@
 TO DO LIST:
   
   - add function to set true only after a number of positive correlations (#define)
+  - create a MAP of the track and control the car according the map and the real data
   - clean up the code
 
 CURRENTLY IN PROCESS:
