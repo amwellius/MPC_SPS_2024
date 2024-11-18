@@ -1,13 +1,14 @@
 TO DO LIST:
-  - frame ADC values (1950 up to 1980, etc, maybe even right in the filter)
-      - hence experiment with different filter windows (make it narrower) 
+  
   - add function to set true only after a number of positive correlations (#define)
   - clean up the code
 
 CURRENTLY IN PROCESS:
-  - fiding a new lap start
+  - fiding a new lap start - tunning
   - FSM for car control
-  - function to indicate braking properly 
+  - frame ADC values (1950 up to 1980) IN THE FILTER
+    - this didt work without the filter at all
+      - hence experiment with different filter windows (make it narrower) 
 
 ALREADY IMPLEMENTED:
   - basic functionality
@@ -17,6 +18,7 @@ ALREADY IMPLEMENTED:
   - simple car control function
   - correlation algorithm
   - convolution algorithm
+  - function to indicate braking properly 
 
 NOTES TO FINDING A NEW LAP START
  - already tried many algorithms
