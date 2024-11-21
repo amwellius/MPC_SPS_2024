@@ -14,6 +14,7 @@
 // VARIABLES
 volatile uint16_t ADC_raw_results[5];  // Define the array
 volatile uint16_t ADC_filtered_results[5];
+volatile uint16_t ADC_framed_results[5];
 
 // FUNCTIONS
 
@@ -62,15 +63,29 @@ uint16_t ADC_get_result(uint8_t index)
 #else
     return ADC_raw_results[index];
 #endif
+
+
+
+
 }
 
 // Function to add a new sample and compute the moving average
 int32_t moving_average(void)
 {
-    volatile uint32_t new_sample = ADC_raw_results[4];
+
+    #ifndef frame_ON
+        volatile uint32_t new_sample = ADC_raw_results[4];
+    #endif
+
+    // Frame the ADC sample if turned on
+    #ifdef frame_ON
+        volatile uint32_t new_sample = frame_samples();
+    #endif
     static int32_t samples[FILTER_WINDOW_SIZE] = {0};  // Buffer for storing samples
     static uint16_t index = 0;                   // Current index for the buffer
     static uint32_t sum = 0;                     // Sum of the samples
+
+
 
     // Remove the oldest sample from the sum
     sum -= samples[index];
@@ -84,6 +99,24 @@ int32_t moving_average(void)
 
     // Return the average
     return sum / FILTER_WINDOW_SIZE;
+}
+
+int32_t frame_samples(void)
+{
+    volatile uint32_t new_sample = ADC_raw_results[4];
+    volatile static uint32_t result_sample = 0;
+
+    if (new_sample >= ADC_UPPER_FRAME) {
+        result_sample = ADC_UPPER_FRAME;
+    }
+    else if (new_sample <= ADC_LOWER_FRAME) {
+        result_sample = ADC_LOWER_FRAME;
+    }
+    else {
+        result_sample = new_sample;
+    }
+
+    return result_sample;
 }
 
 // **************************************INTERUPTS************************************** //
