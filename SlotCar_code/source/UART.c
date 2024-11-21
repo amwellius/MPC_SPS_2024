@@ -9,7 +9,7 @@
 
 // INCLUDES
 #include "include/UART.h"
-#include <stdio.h>  // Include for sprintf
+#include <string.h>
 
 // VARIABLES
 volatile uint8_t allow_TX;
@@ -86,11 +86,9 @@ void ble_send_uint16(uint16_t number) {
 void ble_send_int16(int16_t number) {
     char buffer[7];  // Buffer to hold ASCII string (max 6 digits + sign + null terminator)
     int i = 0;
-    int is_negative = 0;
 
     // Handle negative numbers
     if (number < 0) {
-        is_negative = 1;
         number = -number;  // Take the absolute value
         ble_send("-");     // Send the negative sign
     }
@@ -185,8 +183,10 @@ __interrupt void USCI_A1_ISR(void) {
 
                 // Check for commands
                 if (strcmp(RX_buffer, "start") == 0) {
+                    ble_send("...running...\n");
                     allow_TX = 1;   // Enable transmission
                 } else if (strcmp(RX_buffer, "stop") == 0) {
+                    ble_send("...paused...\n");
                     allow_TX = 0;   // Disable transmission
                 }
                 /* Add more commands here */
