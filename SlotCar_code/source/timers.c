@@ -17,6 +17,7 @@ volatile unsigned char flag_62ms = 0;               // Define flag_62.5ms
 volatile unsigned char flag_500ms = 0;              // Define flag_500ms
 volatile unsigned char flag_1000ms = 0;             // Define flag_1000ms
 static uint16_t overflow_count5 = 0;                // Incremented every 1 ms
+volatile int32_t global_time_ms   = 0;             // Global time in ms
 bool static brake_release_counter_start = false;    // Reset counter for brake release
 
 /* main clock 16 MHz
@@ -180,6 +181,7 @@ __interrupt void Timer_A1(void)
 
     if (overflow_count6 >= one_ms) {
         flag_1ms = 1;                    // Set flag for 1 ms
+        global_time_ms++;                // Global time counter
         overflow_count6 = 0;             // Reset counter
     }
 

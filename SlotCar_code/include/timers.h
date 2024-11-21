@@ -30,6 +30,7 @@ extern volatile unsigned char flag_62ms;         // Declare flag_62.5ms as exter
 extern volatile unsigned char flag_500ms;        // Declare flag_500ms as extern
 extern volatile unsigned char flag_1000ms;       // Declare flag_1000ms as extern
 bool static brake_release_counter_start;         // Declare flag to restart brake LEDs counter
+extern volatile int32_t global_time_ms;          // Declare global time in ms counter;
 
 // FUNCTIONS
 void initClockTo16MHz(void);                      // main clock 16MHz
