@@ -141,7 +141,11 @@ static bool state_FSM_flag1= true;
 static bool state_FSM_flag2= true;
 static bool state_FSM_flag3= true;
 static bool state_FSM_flag4= true;
+static bool state_FSM_flag5= true;
 #endif
+
+// Define map length
+MapPoint trackMap[MAP_SAMPLES_LENGTH]; // Example for 1000 samples max
 
 // Initialize the state machine
 void state_machine_init(void) {
@@ -152,9 +156,13 @@ void state_machine_init(void) {
     state_FSM_flag2 = true;
     state_FSM_flag3 = true;
     state_FSM_flag4 = true;
+    state_FSM_flag5 = true;
     #endif
 
-    current_state = STATE_REF_LAP;
+//    current_state = STATE_REF_LAP;
+
+    current_state = STATE_DEBUG;    // debugging in process
+
     ble_send("\nState Machine Initialized: STATE_INIT\n");
 }
 
@@ -195,6 +203,15 @@ void car_control_FSM(void)
 
                 // get ADC results
                 z_axis = ADC_get_result(4);
+
+                /*
+                 * Create map
+                 */
+
+                save_to_map(z_axis);      // save to map
+
+
+
 
                 #ifdef FSM_DBG_SEND_ADC
                 // Send data over UART BLUETOOTH
@@ -260,7 +277,7 @@ void car_control_FSM(void)
                         right_turn_flag = false;
                     }
 
-                    motor_pwm(PWM_LEVEL_4);
+                    motor_pwm(PWM_LEVEL_3);
                     break;
 
                 case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
@@ -277,7 +294,7 @@ void car_control_FSM(void)
                         left_turn_flag = false;
                     }
 
-                    motor_pwm(PWM_LEVEL_4);
+                    motor_pwm(PWM_LEVEL_3);
                     break;
 
 
@@ -296,13 +313,14 @@ void car_control_FSM(void)
                     right_turn_flag = true;
                     left_turn_flag = true;
 
-                    motor_pwm(PWM_LEVEL_5);
+                    motor_pwm(PWM_LEVEL_4);
                     break;
                 }
                 flag_62ms = 0;
             }
             break;
         }
+
         case STATE_STOPPED:
         {
             #ifdef FSM_STATE_DBG
@@ -337,6 +355,7 @@ void car_control_FSM(void)
 //            state_transition(10); // unknown state -> move to ERROR
             break;
         }
+
         case STATE_ERROR:
         {
             #ifdef FSM_STATE_DBG
@@ -350,6 +369,46 @@ void car_control_FSM(void)
 //            state_transition(STATE_STOPPED);
             break;
         }
+
+        case STATE_DEBUG:
+        {
+            #ifdef FSM_STATE_DBG
+            if (state_FSM_flag5) {
+                ble_send("In STATE_DEBUG!\n");
+                state_FSM_flag5 = false;
+            }
+            #endif
+
+            if (variable_delay_ms(5, 62)) {
+
+                z_axis = ADC_get_result(4);
+
+                #ifdef FSM_DBG_SEND_ADC
+                // Send data over UART BLUETOOTH
+                ble_send_uint16(z_axis);
+                ble_send("\n");
+                #endif
+
+                /* OTHER TASKS HERE */
+                if(!save_to_map(z_axis)){      // save to map
+
+                    // print map
+                    show_map();
+
+                    // mapIndex overflowed! Change states
+                    state_transition(STATE_STOPPED);
+                }
+            }
+
+//            if (variable_delay_ms(6, 1000)) {
+//                ble_send("Global Time ms: \n");
+//                ble_send_int32(global_time_ms);
+//                ble_send("\n");
+//              }
+
+            break;
+        }
+
         default:
         {
             #ifdef FSM_STATE_DBG
@@ -384,6 +443,7 @@ void state_machine_reset(void)
     state_FSM_flag2 = true;
     state_FSM_flag3 = true;
     state_FSM_flag4 = true;
+    state_FSM_flag5 = true;
     #endif
 
     ble_send("State Machine Restarting...\n");
@@ -421,6 +481,77 @@ void lap_counter(void)
     ble_send("Lap counter: ");
     ble_send_uint16(lap_counter);
     ble_send("\n");
+}
+
+/***************************************************************************************************************/
+/*
+ * A function to create a map of the race track.
+ * Returns FALSE is overflows
+ */
+bool save_to_map(uint16_t adcValue)
+{
+    static uint16_t mapIndex = 0;               // set index to 0
+    static uint16_t distanceFromStart = 0;
+
+    if (mapIndex < MAP_SAMPLES_LENGTH) {
+        trackMap[mapIndex].adcValue = adcValue;                 // save the ADC value
+        trackMap[mapIndex].timeFromStart = global_time_ms;      // save timestamp in ms
+
+        // get distance from start  !!!  CHANGE ACCORDINGLY  !!!
+        // Assuming speed is set to PWM_LEVEL_3 = 1 m/s
+        // Assuming this function is called every 62ms (please match in the calling if not met!)
+            // Assuming mapIndex is incremented every new call - meaning every 62ms
+        distanceFromStart = 1 * 62 * mapIndex / 10;          // give the distance in meters so "/10" gives centimeters
+        trackMap[mapIndex].distanceFromStart = distanceFromStart; // save distance from start stamp
+
+
+        // BLE DBG
+        #ifdef MAP_DBG
+        ble_send("DBG: \tInx \tADC \tDist \ttms \n");
+        ble_send(" \t");
+        ble_send_uint16(mapIndex);
+        ble_send(" \t");
+        ble_send_uint16(trackMap[mapIndex].adcValue);
+        ble_send(" \t");
+        ble_send_uint16(trackMap[mapIndex].distanceFromStart);
+        ble_send(" \t");
+        ble_send_uint16(trackMap[mapIndex].timeFromStart);
+        ble_send("\n");
+        #endif
+
+        mapIndex++;     // increment the index counter
+
+        return true;    // return TRUE if mapIndex in range
+    }
+
+    return false;       // return false when mapIndex overflows
+}
+
+/***************************************************************************************************************/
+/*
+ * A function to show/print MAP over BLE
+ */
+void show_map(void)
+{
+
+    uint16_t i = 0;
+
+    ble_send("MAP: \tInx \tADC \tDist \ttms \n");
+
+    for (i=0;i<MAP_SAMPLES_LENGTH;i++){
+        ble_send(" \t");
+        ble_send_uint16(i);
+        ble_send(" \t");
+        ble_send_uint16(trackMap[i].adcValue);
+        ble_send(" \t");
+        ble_send_uint16(trackMap[i].distanceFromStart);
+        ble_send(" \t");
+        ble_send_uint16(trackMap[i].timeFromStart);
+        ble_send("\n");
+    }
+
+    ble_send("Map Printed!\n");
+
 }
 
 

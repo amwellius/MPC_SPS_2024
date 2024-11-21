@@ -47,7 +47,7 @@ int main(void)
     UART_init();
 
     // set 1 to start on start-up
-    allow_TX = 1;
+    allow_TX = 0;
 
     while(1)
     {
@@ -55,10 +55,11 @@ int main(void)
         /* IF IN DEBUG MODE */
             if (!MASTER_BLE_DBG_flag) {
                 ble_send("\t **** DEBUG MODE ****\n");
+                ble_send("Type 'start' or 'stop' to proceed!\n");
                 MASTER_BLE_DBG_flag = true;
             }
             if (variable_delay_ms(0, 120)) {
-//            LED_FL_toggle(); // Blink LED to indicate software debug mode
+            LED_FL_toggle(); // Blink LED to indicate software debug mode
             }
         #endif
 
