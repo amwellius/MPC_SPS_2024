@@ -13,10 +13,10 @@
 
 // DEFINITIONS
 #define axis_enable_z                   // set z y x for axis to be enabled for ADC motor control
-#define MAP_SAMPLES_LENGTH 100         // Define MAX samples length for the map buffer
+#define MAP_SAMPLES_LENGTH 1000         // Define MAX samples length for the map buffer
 
     /* DEBUG */
-//#define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
+#define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
 //#define FSM_DBG                   // comment out to disable BLE DBG messages of FSM DEBUG
 //#define FSM_DBG_SEND_ADC          // comment out to disable BLE DBG messages of FSM SEND ADC DEBUG
 #define MAP_DBG                   // comment out to disable BLE DBG messages of MAP function
@@ -50,5 +50,6 @@ uint16_t feed_stored_data(const uint16_t *storedData, uint16_t dataLength); // g
 void lap_counter(void);                 // when called it prints counted laps
 bool save_to_map(uint16_t adcValue);    // save to map
 void show_map(void);                    // show map over BLE
+void dump_map(void);                    // delete all map samples
 
 #endif /* AUX_H_ */

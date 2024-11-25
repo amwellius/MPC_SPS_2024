@@ -144,6 +144,8 @@ static bool state_FSM_flag4= true;
 static bool state_FSM_flag5= true;
 #endif
 
+static uint16_t mapIndex = 0;       // set init map index to 0
+
 // Define map length
 MapPoint trackMap[MAP_SAMPLES_LENGTH]; // Example for 1000 samples max
 
@@ -159,9 +161,9 @@ void state_machine_init(void) {
     state_FSM_flag5 = true;
     #endif
 
-//    current_state = STATE_REF_LAP;
+    current_state = STATE_REF_LAP;
 
-    current_state = STATE_DEBUG;    // debugging in process
+//    current_state = STATE_DEBUG;    // debugging in process
 
     ble_send("\nState Machine Initialized: STATE_INIT\n");
 }
@@ -187,7 +189,7 @@ void car_control_FSM(void)
             #endif
 
             // set constant speed for reference lap
-            motor_pwm(PWM_LEVEL_3); // means ~1 m/s
+            motor_pwm(PWM_LEVEL_5); // means ~1 m/s
 
             // blink rear LEDs while in reference lap
             if (variable_delay_ms(6, 300)) {
@@ -234,8 +236,8 @@ void car_control_FSM(void)
                     lap_counter();  // count laps function
 
                     // go to the next state
-//                    state_transition(STATE_STOPPED);
-                    state_transition(STATE_RUNNING);
+                    state_transition(STATE_STOPPED);
+//                    state_transition(STATE_RUNNING);
                 }
             }
             break;
@@ -330,25 +332,36 @@ void car_control_FSM(void)
             }
             #endif
 
+            // stop the engine
+            motor_brake();
+
             // blink rear LEDs when in stopped lap
             if (variable_delay_ms(6, 800)) {
                 LED_RR_toggle();
                 LED_RL_toggle();
 
-                #ifdef FSM_STATE_DBG
-                // after 30 seconds go back to Ref_lap
-                static uint8_t temp_counter = 0;
-                ble_send("FSM reset in: ");
-                ble_send_uint16(5 - temp_counter);
-                ble_send("\n");
-                temp_counter++;
-
-                if (temp_counter == 5){
-                    state_machine_reset();
-                    temp_counter = 0;
-                }
-                #endif
+//                #ifdef FSM_STATE_DBG
+//                // after 30 seconds go back to Ref_lap
+//                static uint8_t temp_counter = 0;
+//                ble_send("FSM reset in: ");
+//                ble_send_uint16(5 - temp_counter);
+//                ble_send("\n");
+//                temp_counter++;
+//
+//                if (temp_counter == 5){
+//                    state_machine_reset();
+//                    temp_counter = 0;
+//                }
+//                #endif
             }
+
+            // print map
+//            static uint8_t temp = 0;
+//            if (temp == 0){
+//                show_map();
+//                temp = 1;
+//            }
+
 
             /*Set condition to move into next state */
 
@@ -378,6 +391,8 @@ void car_control_FSM(void)
                 state_FSM_flag5 = false;
             }
             #endif
+
+            motor_pwm(PWM_LEVEL_3);
 
             if (variable_delay_ms(5, 62)) {
 
@@ -446,6 +461,8 @@ void state_machine_reset(void)
     state_FSM_flag5 = true;
     #endif
 
+    corrClearBuffers();     // clear correlation buffers
+    mapIndex = 0;       // set map index to 0
     ble_send("State Machine Restarting...\n");
 }
 
@@ -490,20 +507,19 @@ void lap_counter(void)
  */
 bool save_to_map(uint16_t adcValue)
 {
-    static uint16_t mapIndex = 0;               // set index to 0
     static uint16_t distanceFromStart = 0;
 
-    if (mapIndex < MAP_SAMPLES_LENGTH) {
+    if ((mapIndex < MAP_SAMPLES_LENGTH) && (adcValue != 0)) {
         trackMap[mapIndex].adcValue = adcValue;                 // save the ADC value
         trackMap[mapIndex].timeFromStart = global_time_ms;      // save timestamp in ms
 
+        /* THIS NEED A REPAIR */
         // get distance from start  !!!  CHANGE ACCORDINGLY  !!!
         // Assuming speed is set to PWM_LEVEL_3 = 1 m/s
         // Assuming this function is called every 62ms (please match in the calling if not met!)
             // Assuming mapIndex is incremented every new call - meaning every 62ms
         distanceFromStart = 1 * 62 * mapIndex / 10;          // give the distance in meters so "/10" gives centimeters
         trackMap[mapIndex].distanceFromStart = distanceFromStart; // save distance from start stamp
-
 
         // BLE DBG
         #ifdef MAP_DBG
@@ -523,7 +539,6 @@ bool save_to_map(uint16_t adcValue)
 
         return true;    // return TRUE if mapIndex in range
     }
-
     return false;       // return false when mapIndex overflows
 }
 
@@ -537,8 +552,9 @@ void show_map(void)
     uint16_t i = 0;
 
     ble_send("MAP: \tInx \tADC \tDist \ttms \n");
-
-    for (i=0;i<MAP_SAMPLES_LENGTH;i++){
+    // print map until 0 is the next value
+    while (trackMap[i].adcValue != 0)
+    {
         ble_send(" \t");
         ble_send_uint16(i);
         ble_send(" \t");
@@ -546,12 +562,30 @@ void show_map(void)
         ble_send(" \t");
         ble_send_uint16(trackMap[i].distanceFromStart);
         ble_send(" \t");
-        ble_send_uint16(trackMap[i].timeFromStart);
+        ble_send_int32(trackMap[i].timeFromStart);
         ble_send("\n");
+
+        i++;
     }
 
     ble_send("Map Printed!\n");
 
+}
+
+/***************************************************************************************************************/
+/*
+ * A function to clean the whole map
+ */
+void dump_map(void)
+{
+    uint16_t i = 0;
+    // Clear all values in the array using a loop
+    for (i = 0; i < MAP_SAMPLES_LENGTH; i++) {
+        trackMap[i].adcValue = 0;
+        trackMap[i].distanceFromStart = 0;
+        trackMap[i].timeFromStart = 0;
+    }
+    ble_send("Map cleared!\n");
 }
 
 
