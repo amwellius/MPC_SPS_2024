@@ -12,7 +12,7 @@
 #include <string.h>
 
 // VARIABLES
-volatile uint8_t allow_TX;
+volatile uint8_t external_control;
 char RX_buffer[MAX_RX_BUFFER_SIZE];  // Buffer to store received characters
 unsigned int RX_index = 0;        // Current position in the buffer
 
@@ -156,11 +156,11 @@ void ble_send_int32(int32_t number) {
 //         if (UCA1RXBUF == 'z') // 'z' received?
 //                {
 //                  // pri prijatem znaku 'z' povol vysilaci komunikaci
-//                 allow_TX = 1;
+//                 external_run = 1;
 //                  }
 //         else if (UCA1RXBUF == 'y')
 //         {
-//             allow_TX = 0; //zakaz komunikaci
+//             external_run = 0; //zakaz komunikaci
 //         }
 //    break;
 //    case 0x04: break;  // Vector 4: Transmit buffer empty; Interrupt Flag: UCTXIFG
@@ -182,13 +182,22 @@ __interrupt void USCI_A1_ISR(void) {
                 RX_buffer[RX_index] = '\0';  // Null-terminate the string
 
                 // Check for commands
-                if (strcmp(RX_buffer, "start") == 0) {
+                if (strcmp(RX_buffer, "help") == 0) { // include all external BLE commands
+                    ble_send("Commands:\n");
+                    ble_send("'start' \t 'stop' \t 'reset' \t 'map' \t 'help'\n");
+                }
+                else if (strcmp(RX_buffer, "start") == 0) {
                     ble_send("...running...\n");
-                    allow_TX = 1;   // Enable transmission
+                    external_control = 1;
                 } else if (strcmp(RX_buffer, "stop") == 0) {
                     ble_send("...paused...\n");
-                    allow_TX = 0;   // Disable transmission
-                }
+                    external_control = 0;
+                } else if (strcmp(RX_buffer, "reset") == 0) {
+                    ble_send("...resetting...\n");
+                    external_control = 2;
+                } else if (strcmp(RX_buffer, "map") == 0) {
+                    external_control = 3;
+            }
                 /* Add more commands here */
 
                 // Reset buffer for the next command

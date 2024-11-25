@@ -17,7 +17,7 @@
 #define MAX_RX_BUFFER_SIZE 10
 
 // VARIABLES
-extern volatile uint8_t allow_TX;
+extern volatile uint8_t external_control;
 
 // FUNCTIONS
 void UART_init(void);                       // initialization and initiation communication -- default baud rate is 19600
