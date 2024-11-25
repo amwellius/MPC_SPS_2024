@@ -3,15 +3,12 @@ TO DO LIST:
   - add function to set true only after a number of positive correlations (#define)
   - create a MAP of the track and control the car according the map and the real data
   - normalize ADC samples to -100; 0; 100
-  - if the map has zeros -> it means the end of the map.
   - clean up the code
 
 CURRENTLY IN PROCESS:
   - fiding a new lap start - tunning
   - FSM for car control
-  - frame ADC values (1950 up to 1980) IN THE FILTER
-    - this didt work without the filter at all
-      - hence experiment with different filter windows (make it narrower) 
+  - creating a map
 
 ALREADY IMPLEMENTED:
   - basic functionality
@@ -21,7 +18,8 @@ ALREADY IMPLEMENTED:
   - simple car control function
   - correlation algorithm
   - convolution algorithm
-  - function to indicate braking properly 
+  - function to indicate braking properly
+  - if the map has zeros -> it means the end of the map.
 
 NOTES TO FINDING A NEW LAP START
  - already tried many algorithms
