@@ -13,7 +13,7 @@
 
 // DEFINITIONS
 #define axis_enable_z                   // set z y x for axis to be enabled for ADC motor control
-#define MAP_SAMPLES_LENGTH 1000         // Define MAX samples length for the map buffer
+#define MAP_SAMPLES_LENGTH 100         // Define MAX samples length for the map buffer
 
     /* DEBUG */
 #define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
@@ -35,8 +35,16 @@ typedef enum {
 typedef struct {
     uint16_t adcValue;              // ADC value samled at the time
     uint16_t distanceFromStart;     // Could be distance (cm) or time (ms)
-    uint16_t timeFromStart;         // Time from start. !!! CONSIDER LONGER TYPE IF THE TRACK IS LONGER THAN 64 sec !!!
+    uint32_t timeFromStart;         // Time from start. !!! CONSIDER LONGER TYPE IF THE TRACK IS LONGER THAN 64 sec !!!
 } MapPoint;
+
+// Define map segments
+typedef struct {
+    uint8_t segmentIndex;
+    uint8_t segmentType;        // 0 = straight, 1 = turn
+    uint16_t segmentLength;
+    uint16_t segmentTime;
+}MapSegment;
 
 // VARIABLES
 
@@ -51,5 +59,6 @@ void lap_counter(void);                 // when called it prints counted laps
 bool save_to_map(uint16_t adcValue);    // save to map
 void show_map(void);                    // show map over BLE
 void dump_map(void);                    // delete all map samples
+void create_map(void);
 
 #endif /* AUX_H_ */

@@ -147,7 +147,8 @@ static bool state_FSM_flag5= true;
 static uint16_t mapIndex = 0;       // set init map index to 0
 
 // Define map length
-MapPoint trackMap[MAP_SAMPLES_LENGTH]; // Example for 1000 samples max
+MapPoint trackMap[MAP_SAMPLES_LENGTH];              // Example for 1000 samples max
+MapSegment mapSegments[MAP_SAMPLES_LENGTH / 4];     // Max map segments
 
 // Initialize the state machine
 void state_machine_init(void) {
@@ -161,9 +162,9 @@ void state_machine_init(void) {
     state_FSM_flag5 = true;
     #endif
 
-    current_state = STATE_REF_LAP;
+//    current_state = STATE_REF_LAP;
 
-//    current_state = STATE_DEBUG;    // debugging in process
+    current_state = STATE_DEBUG;    // debugging in process
 
     ble_send("\nState Machine Initialized: STATE_INIT\n");
 }
@@ -393,7 +394,6 @@ void car_control_FSM(void)
             #endif
 
             motor_pwm(PWM_LEVEL_3);
-
             if (variable_delay_ms(5, 62)) {
 
                 z_axis = ADC_get_result(4);
@@ -404,15 +404,17 @@ void car_control_FSM(void)
                 ble_send("\n");
                 #endif
 
+                save_to_map(z_axis);
+
                 /* OTHER TASKS HERE */
-                if(!save_to_map(z_axis)){      // save to map
-
-                    // print map
-                    show_map();
-
-                    // mapIndex overflowed! Change states
-                    state_transition(STATE_STOPPED);
-                }
+//                if(!save_to_map(z_axis)){      // save to map
+//
+//                    // print map
+//                    show_map();
+//
+//                    // mapIndex overflowed! Change states
+//                    state_transition(STATE_STOPPED);
+//                }
             }
 
 //            if (variable_delay_ms(6, 1000)) {
@@ -507,7 +509,7 @@ void lap_counter(void)
  */
 bool save_to_map(uint16_t adcValue)
 {
-    static uint16_t distanceFromStart = 0;
+    static uint32_t distanceFromStart = 0;
 
     if ((mapIndex < MAP_SAMPLES_LENGTH) && (adcValue != 0)) {
         trackMap[mapIndex].adcValue = adcValue;                 // save the ADC value
@@ -515,10 +517,11 @@ bool save_to_map(uint16_t adcValue)
 
         /* THIS NEED A REPAIR */
         // get distance from start  !!!  CHANGE ACCORDINGLY  !!!
-        // Assuming speed is set to PWM_LEVEL_3 = 1 m/s
+        // Assuming speed is set to PWM_LEVEL_3 = 0.6 m/s (calculated 25/Nov/2024 (please provide the data))
         // Assuming this function is called every 62ms (please match in the calling if not met!)
             // Assuming mapIndex is incremented every new call - meaning every 62ms
-        distanceFromStart = 1 * 62 * mapIndex / 10;          // give the distance in meters so "/10" gives centimeters
+        // Let's assume the distance here is only for the code. It does not need to represent real distance.
+        distanceFromStart = (uint32_t)60 * 62 * mapIndex / 1000;          // give the distance in meters so "/100" gives centimeters
         trackMap[mapIndex].distanceFromStart = distanceFromStart; // save distance from start stamp
 
         // BLE DBG
@@ -531,7 +534,7 @@ bool save_to_map(uint16_t adcValue)
         ble_send(" \t");
         ble_send_uint16(trackMap[mapIndex].distanceFromStart);
         ble_send(" \t");
-        ble_send_uint16(trackMap[mapIndex].timeFromStart);
+        ble_send_int32(trackMap[mapIndex].timeFromStart);
         ble_send("\n");
         #endif
 
@@ -586,6 +589,76 @@ void dump_map(void)
         trackMap[i].timeFromStart = 0;
     }
     ble_send("Map cleared!\n");
+}
+
+/***************************************************************************************************************/
+/*
+ * A function to determine what the saved map is and to create segments from
+ */
+void create_map(void)
+{
+
+    // this assumes ONLY PWM_LEVEL_3 ~ 0.6 m/s
+
+    uint16_t i = 0;
+    uint16_t createIndex = 0;
+    if ((i < MAP_SAMPLES_LENGTH) && (trackMap[i].adcValue != 0)) {
+
+        switch (trackMap[createIndex].adcValue){
+        case 1959 ... 1962:     // define range for a straight segment
+        {
+            mapSegments[createIndex].segmentIndex;
+
+            mapSegments[createIndex].segmentType = 0; // straight
+
+            mapSegments[createIndex].segmentLength += trackMap[i].distanceFromStart;
+            mapSegments[createIndex].segmentTime += trackMap[i].timeFromStart ;
+
+
+            break;
+        }
+
+        case 1920 ... 1958:
+        {
+
+            break;
+        }
+
+        case 1963 ... 1988:
+        {
+
+            break;
+        }
+
+        default:
+        {
+            ble_send("ERROR: Unknown Map Segment!\n");
+            break;
+        }
+        }
+
+
+        if (((trackMap[createIndex].adcValue) <= 1962) && ((trackMap[createIndex].adcValue) >= 1959)) {
+            if (1) {
+
+            }
+        }
+
+
+
+
+        createIndex++;
+    }
+
+
+    mapSegments[createIndex].segmentIndex;
+    mapSegments[createIndex].segmentType;
+    mapSegments[createIndex].segmentLength;
+    mapSegments[createIndex].segmentTime;
+
+
+
+
 }
 
 
