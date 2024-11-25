@@ -47,7 +47,7 @@ int main(void)
     UART_init();
 
     // set 1 to start on start-up
-    external_control = 0;
+    external_control = 1;
 
     while(1)
     {
