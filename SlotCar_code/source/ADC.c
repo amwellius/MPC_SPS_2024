@@ -63,10 +63,6 @@ uint16_t ADC_get_result(uint8_t index)
 #else
     return ADC_raw_results[index];
 #endif
-
-
-
-
 }
 
 // Function to add a new sample and compute the moving average

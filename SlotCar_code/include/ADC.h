@@ -14,11 +14,11 @@
 
 // DEFINITIONS
 #define FILTER_WINDOW_SIZE 1000  // Window for moving average filter
-#define filter_ON      // Comment this out to disable the filter
-#define frame_ON
+#define filter_ON       // Comment this out to disable the filter
+#define frame_ON        // Comment this out to disable framing the samples
 
-#define ADC_UPPER_FRAME 1988
-#define ADC_LOWER_FRAME 1920
+#define ADC_UPPER_FRAME 1988        // upper frame
+#define ADC_LOWER_FRAME 1920        // lower frame
 
 // FUNCTIONS
 void ADC_init(void);                        // inits the ADC
