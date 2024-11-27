@@ -172,6 +172,11 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 // run correlation
                 if (corrSAD(referenceData, correlationData, CORRELATION_WINDOW)) {
                     // New lap detected, handle the event
+                    // This happens only if the section of the map right after the reference samples is indeed the same at the reference one.
+
+                    #ifdef CORR_BLE_DBG_REGISTERS
+                    ble_send("DBG: First reference correlation is TRUE! (make sure this is okay)\n");
+                    #endif
                     corrResult = true;  // set flag to indicate positive correlation
                 }
                 firstCorrelationDone = true; // Mark the first lap as complete
@@ -213,9 +218,9 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 ble_send("DBG: Slider data before sliding current data:\n");
                 uint8_t ii = 0;
                 for (ii = 0; ii < SLIDING_WINDOW; ii++) {
-                    ble_send("\t");
+                    ble_send("\t\t\t");
                     ble_send_uint16(sliderData[ii]);
-                    ble_send("\t");
+                    ble_send("\t\t\t");
                     ble_send("\n");
                 }
                 #endif
@@ -253,12 +258,34 @@ bool corrDetectNewLapStart(uint16_t newADCValue)
                 // run correlation
                 if (corrSAD(referenceData, correlationData, CORRELATION_WINDOW)) {
                     // New lap detected, handle the event
-                   // BLE DBG
-                    #ifdef CORR_BLE_DBG_REGISTERS
-                    ble_send("DBG:Correlation TRUE\n");
-                    #endif
-
-                    corrResult = true;      // set flag to indicate positive correlation
+                    // positive correlations counter
+                    static uint8_t counter = 0;
+                    counter++;
+                    if (counter >= CORRELATION_MIN_POSITIVE) {
+                        corrResult = true;      // set flag to indicate positive correlation
+                        // BLE DBG
+                        #ifdef CORR_BLE_DBG_REGISTERS
+                        ble_send("DBG: Correlations counter: ");
+                        ble_send_uint16(counter);
+                        ble_send(" out of ");
+                        ble_send_uint16(CORRELATION_MIN_POSITIVE);
+                        ble_send(".\n");
+                        // Last correlation is positive, handle the event
+                        ble_send("DBG: Correlation function POSITIVE! Handling the event over...\n");
+                        #endif
+                        counter = 0;            // reset counter\t\t
+                    }
+                    else {
+                        // BLE DBG
+                        #ifdef CORR_BLE_DBG_REGISTERS
+                        ble_send("DBG: Correlation TRUE\n");
+                        ble_send("DBG: Correlations counter: ");
+                        ble_send_uint16(counter);
+                        ble_send(" out of ");
+                        ble_send_uint16(CORRELATION_MIN_POSITIVE);
+                        ble_send(".\n");
+                        #endif
+                    }
                 }
                 currentDataCounter = 0; // Reset for collecting new lap data
                 sliderData[currentDataCounter] = newADCValue; // Collect new data

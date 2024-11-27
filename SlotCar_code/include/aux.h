@@ -17,9 +17,9 @@
 
     /* DEBUG */
 #define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
-//#define FSM_DBG                   // comment out to disable BLE DBG messages of FSM DEBUG
+#define FSM_DBG                   // comment out to disable BLE DBG messages of FSM DEBUG
 //#define FSM_DBG_SEND_ADC          // comment out to disable BLE DBG messages of FSM SEND ADC DEBUG
-#define MAP_DBG                   // comment out to disable BLE DBG messages of MAP function
+//#define MAP_DBG                   // comment out to disable BLE DBG messages of MAP function
 
 // Define the states for the state machine
 typedef enum {

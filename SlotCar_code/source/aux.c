@@ -162,9 +162,9 @@ void state_machine_init(void) {
     state_FSM_flag5 = true;
     #endif
 
-//    current_state = STATE_REF_LAP;
+    current_state = STATE_REF_LAP;
 
-    current_state = STATE_DEBUG;    // debugging in process
+//    current_state = STATE_DEBUG;    // debugging in process
 
     ble_send("\nState Machine Initialized: STATE_INIT\n");
 }
@@ -210,11 +210,7 @@ void car_control_FSM(void)
                 /*
                  * Create map
                  */
-
                 save_to_map(z_axis);      // save to map
-
-
-
 
                 #ifdef FSM_DBG_SEND_ADC
                 // Send data over UART BLUETOOTH
