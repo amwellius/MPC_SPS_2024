@@ -143,31 +143,7 @@ void ble_send_int32(int32_t number) {
 }
 
 // **************************************INTERUPTS************************************** //
-//#pragma vector = USCI_A1_VECTOR
-//__interrupt void USCI_A1_ISR(void) {
-//    unsigned char RX_data;
-//
-//
-//    switch(__even_in_range(UCA1IV,4))
-//    {
-//    case 0x00: break;   // Vector 0: No interrupts
-//    case 0x02:          // Vector 2: Data received; Interrupt Flag: UCRXIFG; Interrupt
-//         RX_data = (uint8_t)UCA1RXBUF;
-//         if (UCA1RXBUF == 'z') // 'z' received?
-//                {
-//                  // pri prijatem znaku 'z' povol vysilaci komunikaci
-//                 external_run = 1;
-//                  }
-//         else if (UCA1RXBUF == 'y')
-//         {
-//             external_run = 0; //zakaz komunikaci
-//         }
-//    break;
-//    case 0x04: break;  // Vector 4: Transmit buffer empty; Interrupt Flag: UCTXIFG
-//    default: break;
-//    }
-//}
-
+// Command line session handlings
 #pragma vector = USCI_A1_VECTOR
 __interrupt void USCI_A1_ISR(void) {
     char RX_data;
@@ -184,7 +160,7 @@ __interrupt void USCI_A1_ISR(void) {
                 // Check for commands
                 if (strcmp(RX_buffer, "help") == 0) { // include all external BLE commands
                     ble_send("Commands:\n");
-                    ble_send("'start' \t 'stop' \t 'reset' \t 'map' \t 'help'\n");
+                    ble_send("'start' \t 'stop' \t 'reset' \t 'map' \t 'help' \t 'about'\n");
                 }
                 else if (strcmp(RX_buffer, "start") == 0) {
                     ble_send("...running...\n");
@@ -197,7 +173,14 @@ __interrupt void USCI_A1_ISR(void) {
                     external_control = 2;
                 } else if (strcmp(RX_buffer, "map") == 0) {
                     external_control = 3;
-            }
+                } else if (strcmp(RX_buffer, "about") == 0) {
+                    ble_send("----------------------------------------------------------------------\n");
+                    ble_send("MPC_SPS_2024 course CarControlProject\n");
+                    ble_send("Copyrights: Alzbeta Kostelanska, Samuel Kosik\n");
+                    ble_send("BUT, BRNO, Czechia, 2025, all rights reserved.\n");
+                    ble_send("Copyright (c) 2024, MIT License\n");
+                    ble_send("-----------------------------------------------------------------------\n");
+                }
                 /* Add more commands here */
 
                 // Reset buffer for the next command
