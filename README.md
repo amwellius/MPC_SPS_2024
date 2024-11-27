@@ -1,8 +1,6 @@
 TO DO LIST:
-  
-  - add function to set true only after a number of positive correlations (#define)
   - create a MAP of the track and control the car according the map and the real data
-  - normalize ADC samples to -100; 0; 100
+  - experiment with different CORR thresholds and windows on the real track
   - clean up the code
 
 CURRENTLY IN PROCESS:
@@ -20,6 +18,10 @@ ALREADY IMPLEMENTED:
   - convolution algorithm
   - function to indicate braking properly
   - if the map has zeros -> it means the end of the map.
+  - add function to set true only after a number of positive correlations (#define)
+
+  FUTURE TASKS:
+  - normalize ADC samples to -100; 0; 100
 
 NOTES TO FINDING A NEW LAP START
  - already tried many algorithms
