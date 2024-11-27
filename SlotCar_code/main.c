@@ -43,7 +43,7 @@ int main(void)
     init_timerA1();
     motor_init();
     ADC_init();
-    ADC_start();
+//    ADC_start();
     UART_init();
 
     // set 1 to start on start-up
@@ -63,7 +63,7 @@ int main(void)
             }
         #endif
 
-        // check for external run
+        // Command line external control
         switch (external_control) {
             case 0: // stop state
             {
