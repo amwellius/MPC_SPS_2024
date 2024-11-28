@@ -142,9 +142,14 @@ static bool state_FSM_flag2= true;
 static bool state_FSM_flag3= true;
 static bool state_FSM_flag4= true;
 static bool state_FSM_flag5= true;
+static bool state_FSM_flag6= true;
 #endif
 
 static uint16_t savedMapIndex = 0;       // represent max valid samples in saved map data
+uint16_t temp_total_duration = 0;
+uint16_t mapTotalDuration = 0;
+uint16_t mapTotalLength = 0;
+uint16_t mapCurrentDistance = 0;
 
 // Define map length
 MapPoint trackMap[MAP_SAMPLES_LENGTH];              // Example for 1000 samples max
@@ -160,6 +165,7 @@ void state_machine_init(void) {
     state_FSM_flag3 = true;
     state_FSM_flag4 = true;
     state_FSM_flag5 = true;
+    state_FSM_flag6 = true;
     #endif
 
     current_state = STATE_REF_LAP;
@@ -189,8 +195,8 @@ void car_control_FSM(void)
             }
             #endif
 
-            // set constant speed for reference lap
-            motor_pwm(PWM_LEVEL_5); // means ~1 m/s
+            // set constant speed for reference lap // CHECK TO SET THE SAME ON THE WHOLE FOLLOWING CODE
+            motor_pwm(PWM_LEVEL_3); // means ~1 m/s
 
             // blink rear LEDs while in reference lap
             if (variable_delay_ms(6, 300)) {
@@ -241,9 +247,11 @@ void car_control_FSM(void)
                     show_map();
                     ble_send("* create_map() now\n");
                     create_map();
-
+                    mapCurrentDistance = 0;
+//                    mapCurrentDistance = trackMap[savedMapIndex].distanceFromStart;
                     // go to the next state
-                    state_transition(STATE_STOPPED);
+//                    state_transition(STATE_STOPPED);
+                    state_transition(STATE_SMART_RUNNING);
 //                    state_transition(STATE_RUNNING);
                 }
             }
@@ -327,6 +335,49 @@ void car_control_FSM(void)
                 }
                 flag_62ms = 0;
             }
+            break;
+        }
+
+        /*
+         * This is the main state where the car speed is controlled.
+         */
+        case STATE_SMART_RUNNING:
+        {
+            #ifdef FSM_STATE_DBG
+            if (state_FSM_flag6) {
+                ble_send("In STATE_SMART_RUNNING\n");
+                state_FSM_flag6 = false;
+            }
+            #endif
+
+            /* SMART CODE HERE */
+            static pwm_level_t actual_speed = PWM_LEVEL_3 ;
+            static uint16_t actual_speed_mps = 0;
+            actual_speed_mps = get_speed_mps_10(actual_speed);
+
+            if (variable_delay_ms(6, 62)) {
+                // get current distance
+                // get mapCurrentDistance
+                static uint16_t temp_counter = 0;
+                temp_counter++;
+                mapCurrentDistance += (uint32_t)actual_speed_mps * 62 * temp_counter / 100; // 62 is the variable delay in ms
+                ble_send("mapCurrentDistance: ");
+                ble_send_uint16(mapCurrentDistance);
+                ble_send("\n");
+                actual_speed = adjust_speed(mapCurrentDistance);
+            }
+
+
+
+
+            // Set condition to move into the next state (e.g., end of the race)
+//            if (race_finished()) {
+//                state_transition(STATE_END_RACE);
+//            }
+
+
+            /*Set condition to move into next state */
+//            state_transition(10); // unknown state -> move to ERROR
             break;
         }
 
@@ -455,6 +506,7 @@ void state_machine_reset(void)
     state_FSM_flag3 = true;
     state_FSM_flag4 = true;
     state_FSM_flag5 = true;
+    state_FSM_flag6 = true;
     #endif
 
     corrClearBuffers();     // clear correlation buffers
@@ -596,15 +648,13 @@ void create_map(void)
 
     uint16_t i = 0;
     uint16_t segmentStartIndex = 0;
-    uint8_t currentSegmentType = (trackMap[0].adcValue >= LOWER_STRAIGHT_RANGE && trackMap[0].adcValue <= UPPER_STRAIGHT_RANGE) ? 0 : 1;
+    uint8_t currentSegmentType = (trackMap[0].adcValue >= LOWER_STRAIGHT_RANGE && trackMap[0].adcValue <= UPPER_STRAIGHT_RANGE) ? STRAIGHT_SEGMENT : BEND_SEGMENT;
     uint16_t confirmingSampleCount = 0; // To track the number of confirming samples for transition
     uint16_t segmentCount = 0;
 
-
-
     for (i = 1; i < savedMapIndex; i++) {
         // Determine the type of the current point
-        uint8_t newSegmentType = (trackMap[i].adcValue >= LOWER_STRAIGHT_RANGE && trackMap[i].adcValue <= UPPER_STRAIGHT_RANGE) ? 0 : 1;
+        uint8_t newSegmentType = (trackMap[i].adcValue >= LOWER_STRAIGHT_RANGE && trackMap[i].adcValue <= UPPER_STRAIGHT_RANGE) ? STRAIGHT_SEGMENT : BEND_SEGMENT;
 
         // Check if the type matches the current segment type
         if (newSegmentType == currentSegmentType) {
@@ -629,6 +679,10 @@ void create_map(void)
                 mapSegments[segmentCount].segmentTime =
                     trackMap[i - confirmingSampleCount].timeFromStart -
                     trackMap[segmentStartIndex].timeFromStart;
+
+                // Set the segment's start distance from the start of the lap
+                mapSegments[segmentCount].segmentDistanceFromStart = trackMap[segmentStartIndex].distanceFromStart;
+
                 segmentCount++;
 
                 // Start a new segment with the confirming samples as the beginning
@@ -646,6 +700,10 @@ void create_map(void)
         trackMap[i - 1].distanceFromStart - trackMap[segmentStartIndex].distanceFromStart;
     mapSegments[segmentCount].segmentTime =
         trackMap[i - 1].timeFromStart - trackMap[segmentStartIndex].timeFromStart;
+
+    // Set the segment's start distance from the start of the lap
+    mapSegments[segmentCount].segmentDistanceFromStart = trackMap[segmentStartIndex].distanceFromStart;
+
     segmentCount++;
 
     // check for invalid samples
@@ -658,9 +716,9 @@ void create_map(void)
 
     // print map
     uint8_t ii = 0;
-    uint16_t temp_total_duration = 0;
-    uint16_t temp_total_length = 0;
-    ble_send("FMAP: \tIndex \tType \tLength \tDuration_ms \n");
+    mapTotalDuration = 0;
+    mapTotalLength = 0;
+    ble_send("FMAP: \tIndex \tType \tLength \tDur \tdistanceFromStart \n");
     while ((mapSegments[ii].segmentLength != 0) && (mapSegments[ii].segmentTime != 0))
     {
         ble_send(" \t");
@@ -671,19 +729,98 @@ void create_map(void)
         ble_send_uint16(mapSegments[ii].segmentLength);
         ble_send(" \t");
         ble_send_uint16(mapSegments[ii].segmentTime);
+        ble_send(" \t");
+        ble_send_uint16(mapSegments[ii].segmentDistanceFromStart);
         ble_send("\n");
-        temp_total_duration += mapSegments[ii].segmentTime;
-        temp_total_length   += mapSegments[ii].segmentLength;
+        mapTotalDuration += mapSegments[ii].segmentTime;
+        mapTotalLength   += mapSegments[ii].segmentLength;
         ii++;
     }
     ble_send("Map segmentation completed.\n");
     ble_send("Total duration: ");
-    ble_send_uint16(temp_total_duration);
+    ble_send_uint16(mapTotalDuration);
     ble_send("\nTotal length: ");
-    ble_send_uint16(temp_total_length);
+    ble_send_uint16(mapTotalLength);
     ble_send("\n");
+}
+
+/***************************************************************************************************************/
+// Speed Control Functions
+pwm_level_t adjust_speed(uint16_t currentDistance)
+{
+    static pwm_level_t currentSpeed = PWM_LEVEL_3;  // Default speed for reference lap
+    uint8_t currentSegment = get_current_segment(currentDistance);
+    uint16_t distanceToEnd = mapSegments[currentSegment].segmentLength -
+                             (currentDistance - mapSegments[currentSegment].segmentLength);
+
+    uint16_t transitionDistance = (mapSegments[currentSegment].segmentLength * TRANSITION_PERCENTAGE) / 100;
+
+    if (distanceToEnd <= transitionDistance) {
+        if (mapSegments[currentSegment + 1].segmentType == BEND_SEGMENT && currentSpeed > PWM_LEVEL_4) {
+            currentSpeed--;
+        }
+    } else if (mapSegments[currentSegment].segmentType == STRAIGHT_SEGMENT && currentSpeed < PWM_LEVEL_8) {
+        currentSpeed++;
+    }
+
+    motor_pwm(currentSpeed);
+
+    // BLE DBG
+    ble_send("Current map segment:\n");
+    ble_send(" \t");
+    ble_send_uint16(mapSegments[currentSegment].segmentIndex);
+    ble_send(" \t");
+    ble_send_uint16(mapSegments[currentSegment].segmentType);
+    ble_send(" \t");
+    ble_send_uint16(mapSegments[currentSegment].segmentLength);
+    ble_send(" \t");
+    ble_send_uint16(mapSegments[currentSegment].segmentTime);
+    ble_send("\n");
+    ble_send("Current speed: ");
+    ble_send_uint16(currentSpeed);
+    ble_send(".\n");
+    ble_send("Current currentDistance: ");
+    ble_send_uint16(currentDistance);
+    ble_send(".\n");
+
+    return currentSpeed;
 
 }
+
+uint8_t get_current_segment(uint16_t currentDistance)
+{
+    uint8_t i = 0;
+    // CHANGE 16 TO REAL CONDITIONS!!!!!!
+    for (i = 0; i < 16; i++) {
+        // Ensure we're within the valid segment range (no need to check segmentLength == 0 or segmentTime == 0 here)
+        if (currentDistance >= mapSegments[i].segmentDistanceFromStart &&
+            currentDistance < (mapSegments[i].segmentDistanceFromStart + mapSegments[i].segmentLength)) {
+            return i; // Return the index of the current segment
+        }
+    }
+    return 0;  // Default to first segment if no match found
+}
+
+
+uint16_t get_speed_mps_10(pwm_level_t pwm_level)
+{
+    switch(pwm_level)
+    {
+        case PWM_LEVEL_1:  return 25;   // 0.25 m/s * 10 = 2.5
+        case PWM_LEVEL_2:  return 28;   // 0.28 m/s * 10 = 2.8
+        case PWM_LEVEL_3:  return 60;   // 0.6 m/s * 10 = 6
+        case PWM_LEVEL_4:  return 75;   // 0.75 m/s * 10 = 7.5
+        case PWM_LEVEL_5:  return 100;  // 1.0 m/s * 10 = 10
+        case PWM_LEVEL_6:  return 120;  // 1.2 m/s * 10 = 12
+        case PWM_LEVEL_7:  return 125;  // 1.25 m/s * 10 = 12.5
+        case PWM_LEVEL_8:  return 140;  // 1.4 m/s * 10 = 14
+        case PWM_LEVEL_9:  return 180;  // 1.8 m/s * 10 = 18
+        case PWM_LEVEL_10: return 200;  // 2.0 m/s * 10 = 20
+        default:           return 0;    // Return 0 if invalid PWM level
+    }
+}
+
+
 
 
 

@@ -44,7 +44,6 @@ typedef enum {
     PWM_LEVEL_8  = 80,  // 80%
     PWM_LEVEL_9  = 40,  // 90%
     PWM_LEVEL_10 = 000  // 100%
-
 } pwm_level_t;
 
 

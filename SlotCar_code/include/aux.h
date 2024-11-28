@@ -10,10 +10,14 @@
 
 // INCLUDES
 #include <msp430.h>
+#include "include/motor.h"
 
 // DEFINITIONS
 #define axis_enable_z                   // set z y x for axis to be enabled for ADC motor control
-#define MAP_SAMPLES_LENGTH 200         // Define MAX samples length for the map buffer
+#define MAP_SAMPLES_LENGTH 200          // Define MAX samples length for the map buffer
+#define TRANSITION_PERCENTAGE 15        // Speed Control Constants
+#define BEND_SEGMENT 1
+#define STRAIGHT_SEGMENT 0
 
     /* DEBUG */
 #define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
@@ -25,6 +29,7 @@
 typedef enum {
     STATE_REF_LAP,
     STATE_RUNNING,
+    STATE_SMART_RUNNING,
     STATE_STOPPED,
     STATE_ERROR,
     STATE_DEBUG,
@@ -40,10 +45,11 @@ typedef struct {
 
 // Define map segments
 typedef struct {
-    uint8_t segmentIndex;           // index of a section. Consider longer types for tracks with more than 255 segments
-    uint8_t segmentType;            // type of a section; 0 = straight, 1 = right turn, 2 = left turn
-    uint16_t segmentLength;         // actual length of a section
-    uint16_t segmentTime;           // actual time of a section
+    uint8_t segmentIndex;               // index of a section. Consider longer types for tracks with more than 255 segments
+    uint8_t segmentType;                // type of a section; 0 = straight, 1 = right turn, 2 = left turn
+    uint16_t segmentLength;             // actual length of a section
+    uint16_t segmentTime;               // actual time of a section
+    uint16_t segmentDistanceFromStart;
 }MapSegment;
 
 // VARIABLES
@@ -60,5 +66,8 @@ bool save_to_map(uint16_t adcValue);    // save to map
 void show_map(void);                    // show map over BLE
 void dump_map(void);                    // delete all map samples
 void create_map(void);
+pwm_level_t adjust_speed(uint16_t currentDistance);
+uint8_t get_current_segment(uint16_t currentDistance);
+pwm_level_t get_speed_mps_10(pwm_level_t pwm_level);
 
 #endif /* AUX_H_ */
