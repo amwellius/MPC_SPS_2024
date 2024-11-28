@@ -144,7 +144,7 @@ static bool state_FSM_flag4= true;
 static bool state_FSM_flag5= true;
 #endif
 
-static uint16_t mapIndex = 0;       // set init map index to 0
+static uint16_t savedMapIndex = 0;       // represent max valid samples in saved map data
 
 // Define map length
 MapPoint trackMap[MAP_SAMPLES_LENGTH];              // Example for 1000 samples max
@@ -208,9 +208,9 @@ void car_control_FSM(void)
                 z_axis = ADC_get_result(4);
 
                 /*
-                 * Create map
+                 * TEMP: Create map
                  */
-                save_to_map(z_axis);      // save to map
+//                save_to_map(z_axis);      // save to map
 
                 #ifdef FSM_DBG_SEND_ADC
                 // Send data over UART BLUETOOTH
@@ -218,7 +218,11 @@ void car_control_FSM(void)
                 ble_send("\n");
                 #endif
                 #ifdef FSM_DBG
-                if (corrDetectNewLapStart(feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH))) {
+                uint16_t temp_adc_data = feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH);
+//                if (corrDetectNewLapStart(feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH))) {
+                    // temp
+                    save_to_map(temp_adc_data);      // save to map
+                    if (corrDetectNewLapStart(temp_adc_data)) {
                 #endif
                 #ifndef FSM_DBG
                 if (corrDetectNewLapStart(z_axis)) {
@@ -231,6 +235,12 @@ void car_control_FSM(void)
                     LED_RR_OFF();
                     LED_RL_OFF();
                     lap_counter();  // count laps function
+
+
+                    /* TEMP TASK */
+                    show_map();
+                    ble_send("* create_map() now\n");
+                    create_map();
 
                     // go to the next state
                     state_transition(STATE_STOPPED);
@@ -336,29 +346,7 @@ void car_control_FSM(void)
             if (variable_delay_ms(6, 800)) {
                 LED_RR_toggle();
                 LED_RL_toggle();
-
-//                #ifdef FSM_STATE_DBG
-//                // after 30 seconds go back to Ref_lap
-//                static uint8_t temp_counter = 0;
-//                ble_send("FSM reset in: ");
-//                ble_send_uint16(5 - temp_counter);
-//                ble_send("\n");
-//                temp_counter++;
-//
-//                if (temp_counter == 5){
-//                    state_machine_reset();
-//                    temp_counter = 0;
-//                }
-//                #endif
             }
-
-            // print map
-//            static uint8_t temp = 0;
-//            if (temp == 0){
-//                show_map();
-//                temp = 1;
-//            }
-
 
             /*Set condition to move into next state */
 
@@ -376,6 +364,22 @@ void car_control_FSM(void)
             #endif
 
             // Error handling or recovery
+            // after 30 seconds go back to Ref_lap
+            static uint8_t temp_counter = 0;
+            ble_send("FSM reset in: ");
+            ble_send_uint16(5 - temp_counter);
+            ble_send("\n");
+            temp_counter++;
+
+            // reset FSM
+            if (temp_counter == 5){
+                state_machine_reset();
+                temp_counter = 0;
+            }
+
+            /* OTHER TASKS HERE */
+
+
 //            state_transition(STATE_STOPPED);
             break;
         }
@@ -408,16 +412,10 @@ void car_control_FSM(void)
 //                    // print map
 //                    show_map();
 //
-//                    // mapIndex overflowed! Change states
+//                    // savedMapIndex overflowed! Change states
 //                    state_transition(STATE_STOPPED);
 //                }
             }
-
-//            if (variable_delay_ms(6, 1000)) {
-//                ble_send("Global Time ms: \n");
-//                ble_send_int32(global_time_ms);
-//                ble_send("\n");
-//              }
 
             break;
         }
@@ -460,7 +458,7 @@ void state_machine_reset(void)
     #endif
 
     corrClearBuffers();     // clear correlation buffers
-    mapIndex = 0;       // set map index to 0
+    savedMapIndex = 0;       // set map index to 0
     ble_send("State Machine Restarting...\n");
 }
 
@@ -507,38 +505,39 @@ bool save_to_map(uint16_t adcValue)
 {
     static uint32_t distanceFromStart = 0;
 
-    if ((mapIndex < MAP_SAMPLES_LENGTH) && (adcValue != 0)) {
-        trackMap[mapIndex].adcValue = adcValue;                 // save the ADC value
-        trackMap[mapIndex].timeFromStart = global_time_ms;      // save timestamp in ms
+    if ((savedMapIndex < MAP_SAMPLES_LENGTH) && (adcValue != 0)) {
+        trackMap[savedMapIndex].adcValue = adcValue;                 // save the ADC value
+        trackMap[savedMapIndex].timeFromStart = global_time_ms;      // save timestamp in ms
 
-        /* THIS NEED A REPAIR */
+        /* THIS NEEDS A REPAIR */
         // get distance from start  !!!  CHANGE ACCORDINGLY  !!!
         // Assuming speed is set to PWM_LEVEL_3 = 0.6 m/s (calculated 25/Nov/2024 (please provide the data))
         // Assuming this function is called every 62ms (please match in the calling if not met!)
-            // Assuming mapIndex is incremented every new call - meaning every 62ms
+            // Assuming savedMapIndex is incremented every new call - meaning every 62ms
         // Let's assume the distance here is only for the code. It does not need to represent real distance.
-        distanceFromStart = (uint32_t)60 * 62 * mapIndex / 1000;          // give the distance in meters so "/100" gives centimeters
-        trackMap[mapIndex].distanceFromStart = distanceFromStart; // save distance from start stamp
+        distanceFromStart = (uint32_t)60 * 62 * savedMapIndex / 1000;          // give the distance in meters so "/100" gives centimeters
+        trackMap[savedMapIndex].distanceFromStart = distanceFromStart; // save distance from start stamp
 
         // BLE DBG
         #ifdef MAP_DBG
         ble_send("DBG: \tInx \tADC \tDist \ttms \n");
         ble_send(" \t");
-        ble_send_uint16(mapIndex);
+        ble_send_uint16(savedMapIndex);
         ble_send(" \t");
-        ble_send_uint16(trackMap[mapIndex].adcValue);
+        ble_send_uint16(trackMap[savedMapIndex].adcValue);
         ble_send(" \t");
-        ble_send_uint16(trackMap[mapIndex].distanceFromStart);
+        ble_send_uint16(trackMap[savedMapIndex].distanceFromStart);
         ble_send(" \t");
-        ble_send_int32(trackMap[mapIndex].timeFromStart);
+        ble_send_int32(trackMap[savedMapIndex].timeFromStart);
         ble_send("\n");
         #endif
 
-        mapIndex++;     // increment the index counter
+        savedMapIndex++;     // increment the index counter
 
-        return true;    // return TRUE if mapIndex in range
+        return true;    // return TRUE if savedMapIndex in range
     }
-    return false;       // return false when mapIndex overflows
+    ble_send("ERROR: Map storage full!\n");
+    return false;       // return false when savedMapIndex overflows
 }
 
 /***************************************************************************************************************/
@@ -552,7 +551,7 @@ void show_map(void)
 
     ble_send("MAP: \tInx \tADC \tDist \ttms \n");
     // print map until 0 is the next value
-    while (trackMap[i].adcValue != 0)
+    for (i = 0; i < savedMapIndex; i++)
     {
         ble_send(" \t");
         ble_send_uint16(i);
@@ -563,8 +562,6 @@ void show_map(void)
         ble_send(" \t");
         ble_send_int32(trackMap[i].timeFromStart);
         ble_send("\n");
-
-        i++;
     }
 
     ble_send("Map Printed!\n");
@@ -579,7 +576,7 @@ void dump_map(void)
 {
     uint16_t i = 0;
     // Clear all values in the array using a loop
-    for (i = 0; i < MAP_SAMPLES_LENGTH; i++) {
+    for (i = 0; i < savedMapIndex; i++) {
         trackMap[i].adcValue = 0;
         trackMap[i].distanceFromStart = 0;
         trackMap[i].timeFromStart = 0;
@@ -593,69 +590,103 @@ void dump_map(void)
  */
 void create_map(void)
 {
-
-    // this assumes ONLY PWM_LEVEL_3 ~ 0.6 m/s
+    #define CONFIRMING_SAMPLES_COUNT 4  // define a number of needed samples to start a new segment
+    #define LOWER_STRAIGHT_RANGE 1960   // define lower range for a straight section ADC readings
+    #define UPPER_STRAIGHT_RANGE 1968   // define upper range for a straight section ADC readings
 
     uint16_t i = 0;
-    uint16_t createIndex = 0;
-    if ((i < MAP_SAMPLES_LENGTH) && (trackMap[i].adcValue != 0)) {
-
-        switch (trackMap[createIndex].adcValue){
-        case 1959 ... 1962:     // define range for a straight segment
-        {
-            mapSegments[createIndex].segmentIndex;
-
-            mapSegments[createIndex].segmentType = 0; // straight
-
-            mapSegments[createIndex].segmentLength += trackMap[i].distanceFromStart;
-            mapSegments[createIndex].segmentTime += trackMap[i].timeFromStart ;
+    uint16_t segmentStartIndex = 0;
+    uint8_t currentSegmentType = (trackMap[0].adcValue >= LOWER_STRAIGHT_RANGE && trackMap[0].adcValue <= UPPER_STRAIGHT_RANGE) ? 0 : 1;
+    uint16_t confirmingSampleCount = 0; // To track the number of confirming samples for transition
+    uint16_t segmentCount = 0;
 
 
-            break;
+
+    for (i = 1; i < savedMapIndex; i++) {
+        // Determine the type of the current point
+        uint8_t newSegmentType = (trackMap[i].adcValue >= LOWER_STRAIGHT_RANGE && trackMap[i].adcValue <= UPPER_STRAIGHT_RANGE) ? 0 : 1;
+
+        // Check if the type matches the current segment type
+        if (newSegmentType == currentSegmentType) {
+            confirmingSampleCount = 0; // Reset confirming samples
+        } else {
+            confirmingSampleCount++; // Increment confirming samples for transition
         }
 
-        case 1920 ... 1958:
-        {
+        // If confirming samples reach threshold, finalize the current segment
+        if (confirmingSampleCount >= CONFIRMING_SAMPLES_COUNT) {
+            // Add the confirming samples to the correct segment
+            if (currentSegmentType == newSegmentType) {
+                // If the new samples match the current type, include them in the current segment
+                confirmingSampleCount = 0; // Reset the counter as no transition occurs
+            } else {
+                // Finalize the current segment
+                mapSegments[segmentCount].segmentIndex = segmentCount;
+                mapSegments[segmentCount].segmentType = currentSegmentType;
+                mapSegments[segmentCount].segmentLength =
+                    trackMap[i - confirmingSampleCount].distanceFromStart -
+                    trackMap[segmentStartIndex].distanceFromStart;
+                mapSegments[segmentCount].segmentTime =
+                    trackMap[i - confirmingSampleCount].timeFromStart -
+                    trackMap[segmentStartIndex].timeFromStart;
+                segmentCount++;
 
-            break;
-        }
-
-        case 1963 ... 1988:
-        {
-
-            break;
-        }
-
-        default:
-        {
-            ble_send("ERROR: Unknown Map Segment!\n");
-            break;
-        }
-        }
-
-
-        if (((trackMap[createIndex].adcValue) <= 1962) && ((trackMap[createIndex].adcValue) >= 1959)) {
-            if (1) {
-
+                // Start a new segment with the confirming samples as the beginning
+                segmentStartIndex = i - confirmingSampleCount;
+                currentSegmentType = newSegmentType;
+                confirmingSampleCount = 0;
             }
         }
-
-
-
-
-        createIndex++;
     }
 
+    // Finalize the last segment
+    mapSegments[segmentCount].segmentIndex = segmentCount;
+    mapSegments[segmentCount].segmentType = currentSegmentType;
+    mapSegments[segmentCount].segmentLength =
+        trackMap[i - 1].distanceFromStart - trackMap[segmentStartIndex].distanceFromStart;
+    mapSegments[segmentCount].segmentTime =
+        trackMap[i - 1].timeFromStart - trackMap[segmentStartIndex].timeFromStart;
+    segmentCount++;
 
-    mapSegments[createIndex].segmentIndex;
-    mapSegments[createIndex].segmentType;
-    mapSegments[createIndex].segmentLength;
-    mapSegments[createIndex].segmentTime;
+    // check for invalid samples
+    if (savedMapIndex > MAP_SAMPLES_LENGTH) {
+        ble_send("ERROR: Map storage full!\n");
+    }
+    else if (trackMap[0].adcValue < ADC_LOWER_FRAME && trackMap[0].adcValue > ADC_UPPER_FRAME) { // defined in ADC.h
+        ble_send("ERROR: Unknown Map Segment!\n");
+    }
 
-
-
+    // print map
+    uint8_t ii = 0;
+    uint16_t temp_total_duration = 0;
+    uint16_t temp_total_length = 0;
+    ble_send("FMAP: \tIndex \tType \tLength \tDuration_ms \n");
+    while ((mapSegments[ii].segmentLength != 0) && (mapSegments[ii].segmentTime != 0))
+    {
+        ble_send(" \t");
+        ble_send_uint16(mapSegments[ii].segmentIndex);
+        ble_send(" \t");
+        ble_send_uint16(mapSegments[ii].segmentType);
+        ble_send(" \t");
+        ble_send_uint16(mapSegments[ii].segmentLength);
+        ble_send(" \t");
+        ble_send_uint16(mapSegments[ii].segmentTime);
+        ble_send("\n");
+        temp_total_duration += mapSegments[ii].segmentTime;
+        temp_total_length   += mapSegments[ii].segmentLength;
+        ii++;
+    }
+    ble_send("Map segmentation completed.\n");
+    ble_send("Total duration: ");
+    ble_send_uint16(temp_total_duration);
+    ble_send("\nTotal length: ");
+    ble_send_uint16(temp_total_length);
+    ble_send("\n");
 
 }
+
+
+
 
 
 
