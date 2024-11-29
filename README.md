@@ -2,6 +2,7 @@ TO DO LIST:
   - create a MAP of the track and control the car according the map and the real data
   - experiment with different CORR thresholds and windows on the real track
   - command line command to print segments of the map
+  - add recovery conditions check if correlation is not found after a specific distance
   - clean up the code
 
 CURRENTLY IN PROCESS:
