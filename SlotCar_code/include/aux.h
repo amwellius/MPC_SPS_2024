@@ -14,8 +14,8 @@
 
 // DEFINITIONS
 #define axis_enable_z                   // set z y x for axis to be enabled for ADC motor control
-#define MAP_SAMPLES_LENGTH 200          // Define MAX samples length for the map buffer
-#define TRANSITION_PERCENTAGE 15        // Speed Control Constants
+#define MAP_SAMPLES_LENGTH 400          // Define MAX samples length for the map buffer
+#define TRANSITION_PERCENTAGE 25        // Speed Control Constants
 #define BEND_SEGMENT 1
 #define STRAIGHT_SEGMENT 0
 
@@ -24,6 +24,7 @@
 #define FSM_DBG                   // comment out to disable BLE DBG messages of FSM DEBUG
 //#define FSM_DBG_SEND_ADC          // comment out to disable BLE DBG messages of FSM SEND ADC DEBUG
 //#define MAP_DBG                   // comment out to disable BLE DBG messages of MAP function
+#define SPEED_DBG
 
 // Define the states for the state machine
 typedef enum {
