@@ -49,6 +49,7 @@ int main(void)
     // set 1 to start on start-up
     external_control = 1;
 
+    // Command-line controlled main infinite while loop
     while(1)
     {
         #ifdef MASTER_BLE_DBG
@@ -91,62 +92,19 @@ int main(void)
                external_control = 0; // go to stop state
                break;
             }
+            case 4: // show map state
+            {
+                show_map_segments();
+               external_control = 0; // go to stop state
+               break;
+            }
             default:
             {
                 ble_send("ERROR: Unknown state of external BLE control!\n");
                 break;
             }
         }
-
     }
-
-
-
-    // OLD infinite loop
-//    while (1)
-//    {
-////        car_control_simple();
-////        car_control_FSM();
-//
-////        if (variable_delay_ms(x, 100)) {
-////            // Perform task every xxx ms
-////            LED_FL_toggle(); // Example task
-////        }
-////
-////        if (variable_delay_ms(x, 300)) {
-////            // Perform another task every xxx ms
-////            LED_FR_toggle(); // Example task
-////        }
-
-//        // 1ms interrupt
-//        if (flag_1ms) {               // Check if flag is set
-////            temp_data = moving_average();
-//            flag_1ms = 0;             // Clear the flag
-//        }
-//
-//        // 31.75ms interrupt
-//        if (flag_31ms) {               // Check if flag is set
-////            LED_FL_toggle();
-//            flag_31ms = 0;             // Clear the flag
-//        }
-//
-//        // 500ms interrupt
-//        if (flag_500ms) {               // Check if flag is set
-////            ble_send("Every 500ms\n");
-////            ble_send("\n");
-//            flag_500ms = 0;             // Clear the flag
-//        }
-//
-//        // 1000ms interrupt
-//        if (flag_1000ms) {
-//            flag_1000ms = 0;
-//        }
-//
-//
-//
-//
-//
-//    }
 }
 
 

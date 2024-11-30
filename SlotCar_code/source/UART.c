@@ -160,7 +160,7 @@ __interrupt void USCI_A1_ISR(void) {
                 // Check for commands
                 if (strcmp(RX_buffer, "help") == 0) { // include all external BLE commands
                     ble_send("Commands:\n");
-                    ble_send("'start' \t 'stop' \t 'reset' \t 'map' \t 'help' \t 'about'\n");
+                    ble_send("'start' \t 'stop' \t 'reset' \t 'map' \t 'help' \t 'about' \t 'segments'\n");
                 }
                 else if (strcmp(RX_buffer, "start") == 0) {
                     ble_send("...running...\n");
@@ -173,6 +173,8 @@ __interrupt void USCI_A1_ISR(void) {
                     external_control = 2;
                 } else if (strcmp(RX_buffer, "map") == 0) {
                     external_control = 3;
+                } else if (strcmp(RX_buffer, "segments") == 0) {
+                    external_control = 4;
                 } else if (strcmp(RX_buffer, "about") == 0) {
                     ble_send("----------------------------------------------------------------------\n");
                     ble_send("MPC_SPS_2024 course CarControlProject\n");
@@ -182,7 +184,9 @@ __interrupt void USCI_A1_ISR(void) {
                     ble_send("-----------------------------------------------------------------------\n");
                 }
                 /* Add more commands here */
-
+                else {  // in case of invalid command
+                    ble_send("Invalid command! Use 'help'.\n");
+                }
                 // Reset buffer for the next command
                 RX_index = 0;
             } else {
