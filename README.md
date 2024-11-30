@@ -1,13 +1,12 @@
 TO DO LIST:
   - create a MAP of the track and control the car according the map and the real data
   - experiment with different CORR thresholds and windows on the real track
-  - command line command to print segments of the map
-  - add recovery conditions check if correlation is not found after a specific distance
   - clean up the code
 
 TO DO LIST for the last week:
   - test different CW and SW and DS to get the right SAD threshold!
-  - test different time intervals for car control and ADC  
+  - test different time intervals for car control and ADC
+  - add ADC values as a safety to override reading-map-changing speed too much 
 
 CURRENTLY IN PROCESS:
   - fiding a new lap start - tunning
@@ -25,6 +24,8 @@ ALREADY IMPLEMENTED:
   - function to indicate braking properly
   - if the map has zeros -> it means the end of the map.
   - add function to set true only after a number of positive correlations (#define)
+  - add recovery conditions check if correlation is not found after a specific distance
+  - command line command to print segments of the map
 
   FUTURE TASKS:
   - normalize ADC samples to -100; 0; 100
