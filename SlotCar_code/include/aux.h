@@ -14,18 +14,18 @@
 
 // DEFINITIONS
 #define axis_enable_z                   // set z y x for axis to be enabled for ADC motor control
-#define MAP_SAMPLES_LENGTH 400          // Define MAX samples length for the map buffer
+#define MAP_SAMPLES_LENGTH 1000         // Define MAX samples length for the map buffer
 #define TRANSITION_PERCENTAGE 25        // Speed Control Constants
 #define BEND_SEGMENT 1                  // define bend segment in map
 #define STRAIGHT_SEGMENT 0              // define straight segment in map
 #define CONFIRMING_SAMPLES_COUNT 5      // define a number of needed samples to start a new segment
 #define LOWER_STRAIGHT_RANGE 1960       // define lower range for a straight section ADC readings
 #define UPPER_STRAIGHT_RANGE 1968       // define upper range for a straight section ADC readings
-#define MAX_LENGTH_REF_LAP 800         // set max length for REF_LAP in cm. After overflow FSM changes states
+#define MAX_LENGTH_REF_LAP 800          // set max length for REF_LAP in cm. After overflow FSM changes states
 
 
     /* DEBUG */
-//#define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
+#define FSM_STATE_DBG             // comment out to disable BLE DBG messages of FSM STATES DEBUG
 #define FSM_DBG                   // comment out to disable BLE DBG messages of FSM DEBUG
 //#define FSM_DBG_SEND_ADC          // comment out to disable BLE DBG messages of FSM SEND ADC DEBUG
 //#define MAP_DBG                   // comment out to disable BLE DBG messages of MAP function
@@ -47,17 +47,17 @@ typedef enum {
 // Define map stamps
 typedef struct {
     uint16_t adcValue;              // ADC value sampled at the time
-    uint16_t distanceFromStart;     // Could be distance (cm) or time (ms)
-    uint32_t timeFromStart;         // Time from start. !!! CONSIDER LONGER TYPE IF THE TRACK IS LONGER THAN 64 sec !!!
+    uint32_t distanceFromStart;     // Could be distance (cm) or time (ms)
+    uint16_t timeFromStart;         // Time from start. !!! CONSIDER LONGER TYPE IF THE TRACK IS LONGER THAN 64 sec !!!
 } MapPoint;
 
 // Define map segments
 typedef struct {
     uint8_t segmentIndex;               // index of a section. Consider longer types for tracks with more than 255 segments
     uint8_t segmentType;                // type of a section; 0 = straight, 1 = right turn, 2 = left turn
-    uint16_t segmentLength;             // actual length of a section
+    uint32_t segmentLength;             // actual length of a section
     uint16_t segmentTime;               // actual time of a section
-    uint16_t segmentDistanceFromStart;
+    uint32_t segmentDistanceFromStart;
 }MapSegment;
 
 // VARIABLES
@@ -73,7 +73,8 @@ void lap_counter(void);                 // when called it prints counted laps
 bool save_to_map(uint16_t adcValue);    // save to map
 void show_map(void);                    // show map over BLE
 void dump_map(void);                    // delete all map samples
-void create_map(void);
+uint8_t create_map(void);               // function to create map from ADC samples
+void show_map_segments(void);           // show map over BLE
 pwm_level_t adjust_speed(uint16_t currentDistance);
 uint8_t get_current_segment(uint16_t currentDistance);
 pwm_level_t get_speed_mps_10(pwm_level_t pwm_level);

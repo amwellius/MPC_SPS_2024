@@ -145,11 +145,12 @@ static bool state_FSM_flag5= true;
 static bool state_FSM_flag6= true;
 #endif
 
-static uint16_t savedMapIndex = 0;       // represent max valid samples in saved map data
-uint16_t temp_total_duration = 0;
+static uint16_t savedMapIndex = 0;       // represents max valid samples in saved map data
+const uint16_t temp_total_duration = 0;
 uint16_t mapTotalDuration = 0;
-uint16_t mapTotalLength = 0;
-uint16_t mapCurrentDistance = 0;
+uint32_t mapTotalLength = 0;
+uint32_t mapCurrentDistance = 0;        // map distance. Divide by 1000 to get in cm
+uint8_t segmentsCount = 0;              // holds number of segments
 
 // Define map length
 MapPoint trackMap[MAP_SAMPLES_LENGTH];              // Example for 1000 samples max
@@ -212,7 +213,7 @@ void car_control_FSM(void)
                 z_axis = ADC_get_result(4);     // get ADC results
 //                save_to_map(z_axis);            // save to map
                 // map distance counter. 60 represents speed PWM_LEVEL_3 ~0.6 m/s
-                mapCurrentDistance += (uint32_t)60 * 62 / 1000; // 62 is the variable delay in ms
+                mapCurrentDistance += (uint32_t)60 * 62; // 62 is the variable delay in ms
 
                 #ifdef FSM_DBG_SEND_ADC
                 // Send data over UART BLUETOOTH
@@ -220,39 +221,42 @@ void car_control_FSM(void)
                 ble_send("\n");
                 #endif
                 #ifdef FSM_DBG
-                uint16_t temp_adc_data = feed_stored_data(stored_track_data_2, STORED_DATA_2_LENGTH);
+                uint16_t temp_adc_data = feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH);
 //                if (corrDetectNewLapStart(feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH))) {
                     // temp
-//                    save_to_map(temp_adc_data);      // save to map
+                    save_to_map(temp_adc_data);      // save to map
                     if (corrDetectNewLapStart(temp_adc_data)) {
                 #endif
                 #ifndef FSM_DBG
                 if (corrDetectNewLapStart(z_axis)) {
                 #endif
                     #ifdef FSM_STATE_DBG
-                    ble_send("**** Correlation found ****\n");
+                    ble_send("Correlation found at ");
+                    ble_send_uint16(mapCurrentDistance / 1000);
+                    ble_send(" cm\n");
                     #endif
 
                     //reset LEDs to OFF state
                     LED_RR_OFF();
                     LED_RL_OFF();
-//                    lap_counter();  // count laps function
 
-//                    show_map();       // show map
-//                    create_map();     // create map
-//                    mapCurrentDistance = 0;
+                    segmentsCount = create_map();               // create map
+                    mapCurrentDistance = 0;     // set distance to 0
+
+                    ble_send("There is : ");
+                    ble_send_uint16(segmentsCount);
+                    ble_send(" segments in the segmented map!\n");
 
                     // go to the next state
-//                    state_transition(STATE_STOPPED);
+                    state_transition(STATE_STOPPED);
 //                    state_transition(STATE_SMART_RUNNING);
 //                    state_transition(STATE_RUNNING);
                 }
                 // Emergency checker if correlation not found
-                if (mapCurrentDistance >= MAX_LENGTH_REF_LAP) {
+                if (mapCurrentDistance / 1000 >= MAX_LENGTH_REF_LAP) {
                     ble_send("Correlation not found after reaching max length! \nStarting emergency FSM state...");
                     state_transition(STATE_RUNNING);
                 }
-
             }
             break;
         }
@@ -281,6 +285,7 @@ void car_control_FSM(void)
                 switch(z_axis)
                 {
                 case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
+                {
                     LED_FR_ON();
                     LED_FL_OFF();
 
@@ -295,9 +300,9 @@ void car_control_FSM(void)
 
                     motor_pwm(PWM_LEVEL_3);
                     break;
-
+                }
                 case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
-                    LED_FR_OFF();
+                {
                     LED_FL_ON();
 
                     // Call led_brake() to indicate slowing down
@@ -312,13 +317,14 @@ void car_control_FSM(void)
 
                     motor_pwm(PWM_LEVEL_3);
                     break;
-
+                }
 
                 /* Invoke a rebuilt of this part!!
                  * The problem lays in changing from turn to turn. The ADC reads values inside the straight-sections region.
                  * This calls the led_brake() function to often when the speed is not and should not be changed.
                  */
                 default:
+                {
                     LED_FL_OFF();
                     LED_FR_OFF();
 
@@ -331,6 +337,7 @@ void car_control_FSM(void)
 
                     motor_pwm(PWM_LEVEL_4);
                     break;
+                }
                 }
                 flag_62ms = 0;
             }
@@ -466,7 +473,6 @@ void car_control_FSM(void)
 //                    state_transition(STATE_STOPPED);
 //                }
             }
-
             break;
         }
 
@@ -556,6 +562,14 @@ bool save_to_map(uint16_t adcValue)
 {
     static uint32_t distanceFromStart = 0;
 
+    // Checker for dumping the first data samples
+    static uint16_t dump_counter = 0;       // First dump data counter
+    if (dump_counter < DUMP_SAMPLES) {
+        dump_counter++;       // increment counter
+        //BLE DEBUG
+        return false;           // return false to ignore DUMP_SAMPLES samples
+    }
+
     if ((savedMapIndex < MAP_SAMPLES_LENGTH) && (adcValue != 0)) {
         trackMap[savedMapIndex].adcValue = adcValue;                 // save the ADC value
         trackMap[savedMapIndex].timeFromStart = global_time_ms;      // save timestamp in ms
@@ -566,7 +580,7 @@ bool save_to_map(uint16_t adcValue)
         // Assuming this function is called every 62ms (please match in the calling if not met!)
             // Assuming savedMapIndex is incremented every new call - meaning every 62ms
         // Let's assume the distance here is only for the code. It does not need to represent real distance.
-        distanceFromStart = (uint32_t)75 * 62 * savedMapIndex / 1000;          // give the distance in meters so "/100" gives centimeters
+        distanceFromStart = (uint32_t)60 * 62 * savedMapIndex;          // give the distance in meters so "/100" gives millimeters
         trackMap[savedMapIndex].distanceFromStart = distanceFromStart; // save distance from start stamp
 
         // BLE DBG
@@ -577,7 +591,7 @@ bool save_to_map(uint16_t adcValue)
         ble_send(" \t");
         ble_send_uint16(trackMap[savedMapIndex].adcValue);
         ble_send(" \t");
-        ble_send_uint16(trackMap[savedMapIndex].distanceFromStart);
+        ble_send_uint16(trackMap[savedMapIndex].distanceFromStart / 1000);
         ble_send(" \t");
         ble_send_int32(trackMap[savedMapIndex].timeFromStart);
         ble_send("\n");
@@ -597,11 +611,9 @@ bool save_to_map(uint16_t adcValue)
  */
 void show_map(void)
 {
-
     uint16_t i = 0;
-
     ble_send("MAP: \tInx \tADC \tDist \ttms \n");
-    // print map until 0 is the next value
+    // print map until savedMapIndex, which represents valid samples saved in the map
     for (i = 0; i < savedMapIndex; i++)
     {
         ble_send(" \t");
@@ -609,14 +621,12 @@ void show_map(void)
         ble_send(" \t");
         ble_send_uint16(trackMap[i].adcValue);
         ble_send(" \t");
-        ble_send_uint16(trackMap[i].distanceFromStart);
+        ble_send_uint16(trackMap[i].distanceFromStart / 1000);
         ble_send(" \t");
         ble_send_int32(trackMap[i].timeFromStart);
         ble_send("\n");
     }
-
     ble_send("Map Printed!\n");
-
 }
 
 /***************************************************************************************************************/
@@ -639,7 +649,7 @@ void dump_map(void)
 /*
  * A function to determine what the saved map is and to create segments from
  */
-void create_map(void)
+uint8_t create_map(void)
 {
     uint16_t i = 0;
     uint16_t segmentStartIndex = 0;
@@ -669,11 +679,11 @@ void create_map(void)
                 mapSegments[segmentCount].segmentIndex = segmentCount;
                 mapSegments[segmentCount].segmentType = currentSegmentType;
                 mapSegments[segmentCount].segmentLength =
-                    trackMap[i - confirmingSampleCount].distanceFromStart -
-                    trackMap[segmentStartIndex].distanceFromStart;
+                        trackMap[i - confirmingSampleCount].distanceFromStart -
+                        trackMap[segmentStartIndex].distanceFromStart;
                 mapSegments[segmentCount].segmentTime =
-                    trackMap[i - confirmingSampleCount].timeFromStart -
-                    trackMap[segmentStartIndex].timeFromStart;
+                        trackMap[i - confirmingSampleCount].timeFromStart -
+                        trackMap[segmentStartIndex].timeFromStart;
 
                 // Set the segment's start distance from the start of the lap
                 mapSegments[segmentCount].segmentDistanceFromStart = trackMap[segmentStartIndex].distanceFromStart;
@@ -691,15 +701,20 @@ void create_map(void)
     // Finalize the last segment
     mapSegments[segmentCount].segmentIndex = segmentCount;
     mapSegments[segmentCount].segmentType = currentSegmentType;
-    mapSegments[segmentCount].segmentLength =
-        trackMap[i - 1].distanceFromStart - trackMap[segmentStartIndex].distanceFromStart;
-    mapSegments[segmentCount].segmentTime =
-        trackMap[i - 1].timeFromStart - trackMap[segmentStartIndex].timeFromStart;
+    mapSegments[segmentCount].segmentLength = trackMap[i - 1].distanceFromStart - trackMap[segmentStartIndex].distanceFromStart;
+    mapSegments[segmentCount].segmentTime = trackMap[i - 1].timeFromStart - trackMap[segmentStartIndex].timeFromStart;
 
     // Set the segment's start distance from the start of the lap
     mapSegments[segmentCount].segmentDistanceFromStart = trackMap[segmentStartIndex].distanceFromStart;
 
     segmentCount++;
+
+    // BLE DBG
+    #ifdef MAP_DBG
+    ble_send("segmentCount: ");
+    ble_send_uint16(segmentCount);
+    ble_send("\n");
+    #endif
 
     // check for invalid samples
     if (savedMapIndex > MAP_SAMPLES_LENGTH) {
@@ -709,43 +724,44 @@ void create_map(void)
         ble_send("ERROR: Unknown Map Segment!\n");
     }
 
-    // print map
-    uint8_t ii = 0;
+    ble_send("Map segmentation completed.\n");
+
+    return segmentCount; // returns number of segments (number + 1)
+}
+/***************************************************************************************************************/
+/*
+ * Function to show segments of the map
+ */
+void show_map_segments(void)
+{
+    uint8_t i = 0;
     mapTotalDuration = 0;
     mapTotalLength = 0;
-    #ifdef CREATE_MAP_DBG
-    ble_send("FMAP: \tIndex \tType \tLength \tDur \tdistanceFromStart \n");
-    #endif
-    while ((mapSegments[ii].segmentLength != 0) && (mapSegments[ii].segmentTime != 0))
+
+    ble_send("MAP SEGMENTS:\n \tIndex \tType \tLength \tDur \tdistanceFromStart \n");
+    while ((mapSegments[i].segmentLength != 0) && (mapSegments[i].segmentTime != 0))
     {
-        #ifdef CREATE_MAP_DBG
         ble_send(" \t");
-        ble_send_uint16(mapSegments[ii].segmentIndex);
+        ble_send_uint16(mapSegments[i].segmentIndex);
         ble_send(" \t");
-        ble_send_uint16(mapSegments[ii].segmentType);
+        ble_send_uint16(mapSegments[i].segmentType);
         ble_send(" \t");
-        ble_send_uint16(mapSegments[ii].segmentLength);
+        ble_send_uint16(mapSegments[i].segmentLength / 1000);
         ble_send(" \t");
-        ble_send_uint16(mapSegments[ii].segmentTime);
+        ble_send_uint16(mapSegments[i].segmentTime);
         ble_send(" \t");
-        ble_send_uint16(mapSegments[ii].segmentDistanceFromStart);
+        ble_send_uint16(mapSegments[i].segmentDistanceFromStart / 1000);
         ble_send("\n");
-        #endif
-        mapTotalDuration += mapSegments[ii].segmentTime;
-        mapTotalLength   += mapSegments[ii].segmentLength;
-        ii++;
+        mapTotalDuration += mapSegments[i].segmentTime;
+        mapTotalLength   += mapSegments[i].segmentLength;
+        i++;
     }
-    #ifdef CREATE_MAP_DBG
-    ble_send("Map segmentation completed.\n");
     ble_send("Total duration: ");
     ble_send_uint16(mapTotalDuration);
     ble_send(" ms \nTotal length: ");
-    ble_send_uint16(mapTotalLength);
-    ble_send(" mm \n");
-    #endif
-
+    ble_send_uint16(mapTotalLength / 1000);
+    ble_send(" cm \n");
 }
-
 /***************************************************************************************************************/
 // Speed Control Functions
 pwm_level_t adjust_speed(uint16_t currentDistance)
@@ -759,10 +775,10 @@ pwm_level_t adjust_speed(uint16_t currentDistance)
         ble_send("\ncurrentSegment: ");
         ble_send_uint16(currentSegment);
         ble_send("\n");
-    uint16_t distanceToEnd = mapSegments[currentSegment + 1].segmentDistanceFromStart - currentDistance;
+    uint32_t distanceToEnd = mapSegments[currentSegment + 1].segmentDistanceFromStart - currentDistance;
 //                             (currentDistance - mapSegments[currentSegment].segmentLength); // not correct, only one substitution
 
-    uint16_t transitionDistance = (mapSegments[currentSegment].segmentLength * TRANSITION_PERCENTAGE) / 100;
+    uint32_t transitionDistance = (mapSegments[currentSegment].segmentLength * TRANSITION_PERCENTAGE) / 100;
 
     if (distanceToEnd <= transitionDistance) {
         // check the next segment
