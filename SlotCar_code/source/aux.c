@@ -487,6 +487,7 @@ void car_control_FSM(void)
     }
 }
 
+/***************************************************************************************************************/
 // Function to handle state transitions
 void state_transition(State new_state)
 {
@@ -500,6 +501,7 @@ void state_transition(State new_state)
     current_state = new_state; // go to the next state
 }
 
+/***************************************************************************************************************/
 // Function to restart state machine
 void state_machine_reset(void)
 {
@@ -739,8 +741,7 @@ void show_map_segments(void)
     mapTotalLength = 0;
 
     ble_send("MAP SEGMENTS:\n \tIndex \tType \tLength \tDur \tdistanceFromStart \n");
-    while ((mapSegments[i].segmentLength != 0) && (mapSegments[i].segmentTime != 0))
-    {
+    for (i = 0; i < segmentsCount; i++ ) {
         ble_send(" \t");
         ble_send_uint16(mapSegments[i].segmentIndex);
         ble_send(" \t");
@@ -754,7 +755,6 @@ void show_map_segments(void)
         ble_send("\n");
         mapTotalDuration += mapSegments[i].segmentTime;
         mapTotalLength   += mapSegments[i].segmentLength;
-        i++;
     }
     ble_send("Total duration: ");
     ble_send_uint16(mapTotalDuration);
@@ -844,8 +844,7 @@ pwm_level_t adjust_speed(uint16_t currentDistance)
 uint8_t get_current_segment(uint16_t currentDistance)
 {
     uint8_t i = 0;
-    // CHANGE 16 TO REAL CONDITIONS!!!!!!
-    for (i = 0; i < 16; i++) {
+    for (i = 0; i < segmentsCount; i++) {
         // Ensure we're within the valid segment range (no need to check segmentLength == 0 or segmentTime == 0 here)
         if (currentDistance >= mapSegments[i].segmentDistanceFromStart &&
             currentDistance < (mapSegments[i].segmentDistanceFromStart + mapSegments[i].segmentLength)) {
@@ -853,7 +852,7 @@ uint8_t get_current_segment(uint16_t currentDistance)
         }
     }
 
-    if (i >= 16) {
+    if (i >= segmentsCount) {
         i = 0;
         mapCurrentDistance = 0;
     }
