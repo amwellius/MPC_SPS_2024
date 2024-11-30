@@ -5,6 +5,10 @@ TO DO LIST:
   - add recovery conditions check if correlation is not found after a specific distance
   - clean up the code
 
+TO DO LIST for the last week:
+  - test different CW and SW and DS to get the right SAD threshold!
+  - test different time intervals for car control and ADC  
+
 CURRENTLY IN PROCESS:
   - fiding a new lap start - tunning
   - FSM for car control
