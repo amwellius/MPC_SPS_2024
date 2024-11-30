@@ -199,7 +199,7 @@ void car_control_FSM(void)
             motor_pwm(PWM_LEVEL_3); // means ~1 m/s
 
             // blink rear LEDs while in reference lap
-            if (variable_delay_ms(6, 300)) {
+            if (variable_delay_ms(1, 300)) {
                 LED_RR_toggle();
                 LED_RL_toggle();
             }
@@ -208,15 +208,11 @@ void car_control_FSM(void)
             // use 10ms for stored data
             // test usage of 62ms for ADC to match the speed control
                 // if CORRELATION_WINDOW=100, then this takes samples of 5 seconds of the track
-            if (variable_delay_ms(5, 62)) {
-
-                // get ADC results
-                z_axis = ADC_get_result(4);
-
-                /*
-                 * TEMP: Create map
-                 */
-//                save_to_map(z_axis);      // save to map
+            if (variable_delay_ms(2, 62)) {
+                z_axis = ADC_get_result(4);     // get ADC results
+//                save_to_map(z_axis);            // save to map
+                // map distance counter. 60 represents speed PWM_LEVEL_3 ~0.6 m/s
+                mapCurrentDistance += (uint32_t)60 * 62 / 1000; // 62 is the variable delay in ms
 
                 #ifdef FSM_DBG_SEND_ADC
                 // Send data over UART BLUETOOTH
@@ -224,7 +220,7 @@ void car_control_FSM(void)
                 ble_send("\n");
                 #endif
                 #ifdef FSM_DBG
-                uint16_t temp_adc_data = feed_stored_data(stored_track_data_3, STORED_DATA_3_LENGTH);
+                uint16_t temp_adc_data = feed_stored_data(stored_track_data_2, STORED_DATA_2_LENGTH);
 //                if (corrDetectNewLapStart(feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH))) {
                     // temp
 //                    save_to_map(temp_adc_data);      // save to map
@@ -240,19 +236,23 @@ void car_control_FSM(void)
                     //reset LEDs to OFF state
                     LED_RR_OFF();
                     LED_RL_OFF();
-                    lap_counter();  // count laps function
+//                    lap_counter();  // count laps function
 
+//                    show_map();       // show map
+//                    create_map();     // create map
+//                    mapCurrentDistance = 0;
 
-                    /* TEMP TASK */
-//                    show_map();
-//                    ble_send("* create_map() now\n");
-//                    create_map();
-                    mapCurrentDistance = 0;
                     // go to the next state
 //                    state_transition(STATE_STOPPED);
 //                    state_transition(STATE_SMART_RUNNING);
 //                    state_transition(STATE_RUNNING);
                 }
+                // Emergency checker if correlation not found
+                if (mapCurrentDistance >= MAX_LENGTH_REF_LAP) {
+                    ble_send("Correlation not found after reaching max length! \nStarting emergency FSM state...");
+                    state_transition(STATE_RUNNING);
+                }
+
             }
             break;
         }
@@ -354,7 +354,7 @@ void car_control_FSM(void)
             static uint16_t actual_speed_mps = 0;
             actual_speed_mps = get_speed_mps_10(actual_speed);
 
-            if (variable_delay_ms(6, 62)) {
+            if (variable_delay_ms(2, 62)) {
                 // get current distance
                 // get mapCurrentDistance
                 static uint16_t temp_counter = 0;
@@ -393,7 +393,7 @@ void car_control_FSM(void)
             motor_brake();
 
             // blink rear LEDs when in stopped lap
-            if (variable_delay_ms(6, 800)) {
+            if (variable_delay_ms(1, 800)) {
                 LED_RR_toggle();
                 LED_RL_toggle();
             }
@@ -550,7 +550,7 @@ void lap_counter(void)
 /***************************************************************************************************************/
 /*
  * A function to create a map of the race track.
- * Returns FALSE is overflows
+ * Returns FALSE if overflows
  */
 bool save_to_map(uint16_t adcValue)
 {
@@ -641,10 +641,6 @@ void dump_map(void)
  */
 void create_map(void)
 {
-    #define CONFIRMING_SAMPLES_COUNT 5  // define a number of needed samples to start a new segment
-    #define LOWER_STRAIGHT_RANGE 1960   // define lower range for a straight section ADC readings
-    #define UPPER_STRAIGHT_RANGE 1968   // define upper range for a straight section ADC readings
-
     uint16_t i = 0;
     uint16_t segmentStartIndex = 0;
     uint8_t currentSegmentType = (trackMap[0].adcValue >= LOWER_STRAIGHT_RANGE && trackMap[0].adcValue <= UPPER_STRAIGHT_RANGE) ? STRAIGHT_SEGMENT : BEND_SEGMENT;
@@ -707,7 +703,7 @@ void create_map(void)
 
     // check for invalid samples
     if (savedMapIndex > MAP_SAMPLES_LENGTH) {
-        ble_send("ERROR: Map storage full!\n");
+        ble_send("ERROR: Map segments storage full!\n");
     }
     else if (trackMap[0].adcValue < ADC_LOWER_FRAME && trackMap[0].adcValue > ADC_UPPER_FRAME) { // defined in ADC.h
         ble_send("ERROR: Unknown Map Segment!\n");
@@ -717,9 +713,12 @@ void create_map(void)
     uint8_t ii = 0;
     mapTotalDuration = 0;
     mapTotalLength = 0;
+    #ifdef CREATE_MAP_DBG
     ble_send("FMAP: \tIndex \tType \tLength \tDur \tdistanceFromStart \n");
+    #endif
     while ((mapSegments[ii].segmentLength != 0) && (mapSegments[ii].segmentTime != 0))
     {
+        #ifdef CREATE_MAP_DBG
         ble_send(" \t");
         ble_send_uint16(mapSegments[ii].segmentIndex);
         ble_send(" \t");
@@ -731,16 +730,20 @@ void create_map(void)
         ble_send(" \t");
         ble_send_uint16(mapSegments[ii].segmentDistanceFromStart);
         ble_send("\n");
+        #endif
         mapTotalDuration += mapSegments[ii].segmentTime;
         mapTotalLength   += mapSegments[ii].segmentLength;
         ii++;
     }
+    #ifdef CREATE_MAP_DBG
     ble_send("Map segmentation completed.\n");
     ble_send("Total duration: ");
     ble_send_uint16(mapTotalDuration);
     ble_send(" ms \nTotal length: ");
     ble_send_uint16(mapTotalLength);
     ble_send(" mm \n");
+    #endif
+
 }
 
 /***************************************************************************************************************/
