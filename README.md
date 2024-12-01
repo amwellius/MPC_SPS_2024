@@ -6,7 +6,8 @@ TO DO LIST:
 TO DO LIST for the last week:
   - test different CW and SW and DS to get the right SAD threshold!
   - test different time intervals for car control and ADC
-  - add ADC values as a safety to override reading-map-changing speed too much 
+  - add ADC values as a safety to override reading-map-changing speed too much
+  - add control for LEDs from real-time ADC samples
 
 CURRENTLY IN PROCESS:
   - fiding a new lap start - tunning
