@@ -1,6 +1,6 @@
 TO DO LIST:
-  - create a MAP of the track and control the car according the map and the real data
   - experiment with different CORR thresholds and windows on the real track
+  - add small braking when approaching a bend section
   - clean up the code
 
 TO DO LIST for the last week:
@@ -26,6 +26,7 @@ ALREADY IMPLEMENTED:
   - add function to set true only after a number of positive correlations (#define)
   - add recovery conditions check if correlation is not found after a specific distance
   - command line command to print segments of the map
+  - create a MAP of the track and control the car according the map and the real data
 
   FUTURE TASKS:
   - normalize ADC samples to -100; 0; 100
