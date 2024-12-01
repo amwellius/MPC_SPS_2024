@@ -136,6 +136,7 @@ void car_control_simple(void)
 
 static State current_state = STATE_REF_LAP;
 static bool init_FSM_flag = true;
+volatile bool reset_flag = false;
 #ifdef FSM_STATE_DBG
 static bool state_FSM_flag1= true;
 static bool state_FSM_flag2= true;
@@ -373,8 +374,9 @@ void car_control_FSM(void)
             // set condition when the lap ends
             if (mapCurrentDistance >= mapTotalLength) {
                 mapCurrentDistance -= mapTotalLength;   // wrap mapCurrentDistance around and continue
-                ble_send("One loop done, going again!\n");
-                laps = lap_counter();
+                laps = lap_counter();                   // call lap counter
+            } else if (reset_flag) {
+                laps = lap_counter();                   // reset lap counter
             }
             //Set condition to move into the next state (e.g., end of the race)
             if (laps >= MAX_NUMBER_OF_LAPS_IN_RACE) {
@@ -549,11 +551,17 @@ uint16_t feed_stored_data(const uint16_t *storedData, uint16_t dataLength) {
 uint8_t lap_counter(void)
 {
     static uint8_t lap_counter = 0;
-    lap_counter++;
-    ble_send("Lap counter: ");
-    ble_send_uint16(lap_counter);
-    ble_send("\n");
-    return lap_counter; // return number of lap
+    if (reset_flag) {
+        lap_counter = 0;  // Reset the counter
+        reset_flag = false;  // Clear the flag
+        ble_send("Lap counter cleared!\n");
+    } else {
+        lap_counter++;
+        ble_send("Lap counter: ");
+        ble_send_uint16(lap_counter);
+        ble_send("\n");
+    }
+    return lap_counter; // Return current lap count
 }
 
 /***************************************************************************************************************/

@@ -11,6 +11,7 @@
 // INCLUDES
 #include <msp430.h>
 #include "include/motor.h"
+#include <stdbool.h>
 
 // DEFINITIONS
 #define axis_enable_z                   // set z y x for axis to be enabled for ADC motor control
@@ -62,6 +63,8 @@ typedef struct {
 }MapSegment;
 
 // VARIABLES
+extern volatile bool reset_flag;        // reset flag
+extern uint8_t segmentsCount;  // counter for segments
 
 // FUNCTIONS
 void car_control_simple(void);          // simple motor PWM ADC data controlling

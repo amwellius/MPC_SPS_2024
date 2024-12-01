@@ -84,6 +84,8 @@ int main(void)
                 ADC_start();            // start ADC
                 dump_map();             // clear map
                 state_machine_reset();  // set car FSM to restart mode
+                reset_flag = true;      // set reset_flag to TRUE
+                segmentsCount = 0;      //reset counter for map segments
                 break;
             }
             case 3: // show map state
