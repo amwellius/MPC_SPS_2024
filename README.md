@@ -6,13 +6,10 @@ TO DO LIST:
 TO DO LIST for the last week:
   - test different CW and SW and DS to get the right SAD threshold!
   - test different time intervals for car control and ADC
-  - add ADC values as a safety to override reading-map-changing speed too much
-  - add control for LEDs from real-time ADC samples
 
 CURRENTLY IN PROCESS:
   - fiding a new lap start - tunning
   - FSM for car control
-  - creating a map
 
 ALREADY IMPLEMENTED:
   - basic functionality
@@ -28,6 +25,8 @@ ALREADY IMPLEMENTED:
   - add recovery conditions check if correlation is not found after a specific distance
   - command line command to print segments of the map
   - create a MAP of the track and control the car according the map and the real data
+  - add ADC values as a safety to override reading-map-changing speed too much
+  - add control for LEDs from real-time ADC samples
 
   FUTURE TASKS:
   - normalize ADC samples to -100; 0; 100
