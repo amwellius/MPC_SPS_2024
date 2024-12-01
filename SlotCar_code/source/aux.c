@@ -148,8 +148,8 @@ static bool state_FSM_flag6= true;
 static uint16_t savedMapIndex = 0;       // represents max valid samples in saved map data
 const uint16_t temp_total_duration = 0;
 uint16_t mapTotalDuration = 0;
-uint32_t mapTotalLength = 0;
-uint32_t mapCurrentDistance = 0;        // map distance. Divide by 1000 to get in cm
+uint32_t mapTotalLength = 0;            // Total map length. Divide by 1000 to get in cm
+uint32_t mapCurrentDistance = 0;        // Current map distance. Divide by 1000 to get in cm
 uint8_t segmentsCount = 0;              // holds number of segments
 
 // Define map length
@@ -240,16 +240,14 @@ void car_control_FSM(void)
                     LED_RR_OFF();
                     LED_RL_OFF();
 
-                    segmentsCount = create_map();               // create map
-                    mapCurrentDistance = 0;     // set distance to 0
-
-                    ble_send("There is : ");
-                    ble_send_uint16(segmentsCount);
-                    ble_send(" segments in the segmented map!\n");
+                    segmentsCount = create_map();   // create map
+                    mapCurrentDistance = 0;         // set distance to 0
+                                // consider setting to something else for better synchronization
 
                     // go to the next state
-                    state_transition(STATE_STOPPED);
-//                    state_transition(STATE_SMART_RUNNING);
+//                    state_transition(STATE_STOPPED);
+                    state_transition(STATE_SMART_RUNNING);
+                    show_map_segments();
 //                    state_transition(STATE_RUNNING);
                 }
                 // Emergency checker if correlation not found
@@ -357,6 +355,7 @@ void car_control_FSM(void)
             #endif
 
             /* SMART CODE HERE */
+            static uint8_t laps = 0;
             static pwm_level_t actual_speed = PWM_LEVEL_3 ;
             static uint16_t actual_speed_mps = 0;
             actual_speed_mps = get_speed_mps_10(actual_speed);
@@ -367,20 +366,21 @@ void car_control_FSM(void)
                 static uint16_t temp_counter = 0;
                 temp_counter++;
                 // should this be zero the first time? OR adjusted to when the correlation finds it?
-                mapCurrentDistance += (uint32_t)actual_speed_mps * 62 / 1000; // 62 is the variable delay in ms
-//                ble_send("mapCurrentDistance: ");
-//                ble_send_uint16(mapCurrentDistance);
-//                ble_send("\n");
-//                ble_send("Calling actual_speed()\n");
+                mapCurrentDistance += (uint32_t)actual_speed_mps * 62; // 62 is the variable delay in ms
                 actual_speed = adjust_speed(mapCurrentDistance);
             }
 
-            //Set condition to move into the next state (e.g., end of the race)
-            if (mapCurrentDistance > mapTotalLength) {
-                state_transition(STATE_STOPPED);
-                ble_send("Map Finished!\n");
+            // set condition when the lap ends
+            if (mapCurrentDistance >= mapTotalLength) {
+                mapCurrentDistance -= mapTotalLength;   // wrap mapCurrentDistance around and continue
+                ble_send("One loop done, going again!\n");
+                laps = lap_counter();
             }
-
+            //Set condition to move into the next state (e.g., end of the race)
+            if (laps >= MAX_NUMBER_OF_LAPS_IN_RACE) {
+                state_transition(STATE_STOPPED);
+                ble_send("Race Finished!\n");
+            }
 
             /*Set condition to move into next state */
 //            state_transition(10); // unknown state -> move to ERROR
@@ -546,13 +546,14 @@ uint16_t feed_stored_data(const uint16_t *storedData, uint16_t dataLength) {
 }
 /***************************************************************************************************************/
 // A function to print laps when called
-void lap_counter(void)
+uint8_t lap_counter(void)
 {
     static uint8_t lap_counter = 0;
     lap_counter++;
     ble_send("Lap counter: ");
     ble_send_uint16(lap_counter);
     ble_send("\n");
+    return lap_counter; // return number of lap
 }
 
 /***************************************************************************************************************/
@@ -568,7 +569,6 @@ bool save_to_map(uint16_t adcValue)
     static uint16_t dump_counter = 0;       // First dump data counter
     if (dump_counter < DUMP_SAMPLES) {
         dump_counter++;       // increment counter
-        //BLE DEBUG
         return false;           // return false to ignore DUMP_SAMPLES samples
     }
 
@@ -763,33 +763,51 @@ void show_map_segments(void)
     ble_send(" cm \n");
 }
 /***************************************************************************************************************/
-// Speed Control Functions
-pwm_level_t adjust_speed(uint16_t currentDistance)
+/*
+ * Speed control function
+ */
+pwm_level_t adjust_speed(uint32_t currentDistance)
 {
     static pwm_level_t currentSpeed = PWM_LEVEL_4;  // Default speed for reference lap
-
-//    if (currentDistance => mapTotalLength) {
-//        return;
-//    }
     uint8_t currentSegment = get_current_segment(currentDistance);
-        ble_send("\ncurrentSegment: ");
-        ble_send_uint16(currentSegment);
-        ble_send("\n");
-    uint32_t distanceToEnd = mapSegments[currentSegment + 1].segmentDistanceFromStart - currentDistance;
-//                             (currentDistance - mapSegments[currentSegment].segmentLength); // not correct, only one substitution
+    uint8_t nextSegment = currentSegment + 1;
+    uint32_t distanceToEnd = 0;
 
+    // BLE DBG
+    #ifdef SPEED_DBG
+    ble_send("\ncurrentSegment: ");
+    ble_send_uint16(currentSegment);
+    ble_send("\t");
+    ble_send("nextSegment: ");
+    ble_send_uint16(nextSegment);
+    ble_send("\n");
+    #endif
+
+    // check if the next segment is not outside of range of all segments
+    if (nextSegment >= segmentsCount) {
+        distanceToEnd = mapSegments[segmentsCount - 1].segmentDistanceFromStart + mapSegments[segmentsCount - 1].segmentLength - currentDistance;
+        nextSegment = 0; // set next segment as the first one in the lap map -> wrap around and go again as the race continuous
+    // check if the currentDistance is not exceeding the max length of a lap. If yes, set distanceToEnd to avoid wrapping around
+    } else if ((mapSegments[segmentsCount - 1].segmentDistanceFromStart + mapSegments[segmentsCount - 1].segmentLength) <= currentDistance ) {
+        distanceToEnd = 0;  // recovery from overflow
+    }
+    else { // if segments are valid, continue
+        distanceToEnd = mapSegments[nextSegment].segmentDistanceFromStart - currentDistance;
+    }
+
+    // get transitionDistance to react in time
     uint32_t transitionDistance = (mapSegments[currentSegment].segmentLength * TRANSITION_PERCENTAGE) / 100;
 
     if (distanceToEnd <= transitionDistance) {
         // check the next segment
-        if (mapSegments[currentSegment + 1].segmentType == BEND_SEGMENT && currentSpeed < PWM_LEVEL_4) {
+        if (mapSegments[nextSegment].segmentType == BEND_SEGMENT && currentSpeed < PWM_LEVEL_4) {
             currentSpeed = PWM_LEVEL_4;
-            // what about using brakes here to slow down???? Use a ISR to release the brakes after a short time
-                // the release interval can be depended on the PWM_LEVEL, the higher the longer braking
-            // add condition to speed up by one when leaving a bend
-        } else if (mapSegments[currentSegment + 1].segmentType == STRAIGHT_SEGMENT && currentSpeed >= PWM_LEVEL_4) {
+            /* what about using brakes here to slow down???? Use a ISR to release the brakes after a short time
+             * the release interval can be depended on the PWM_LEVEL, the higher the longer braking
+             */
+        // condition to speed up by one when leaving a bend
+        } else if (mapSegments[nextSegment].segmentType == STRAIGHT_SEGMENT && currentSpeed >= PWM_LEVEL_4) {
             currentSpeed = PWM_LEVEL_5;
-
         }
     } else if ((mapSegments[currentSegment].segmentType == STRAIGHT_SEGMENT) && (currentSpeed <= PWM_LEVEL_4)) {
         // very smart condition - it gradually speeds up!
@@ -807,7 +825,8 @@ pwm_level_t adjust_speed(uint16_t currentDistance)
         currentSpeed = PWM_LEVEL_4;
     }
 
-    // !!!! Add condition to prevent speeding too much
+    /* !!!! Add condition to prevent speeding too much */
+    /* !!!! Add condition to check ADC real-time samples to ensure better synchronization */
 
     // change the speed of the motor
     motor_pwm(currentSpeed);
@@ -820,7 +839,7 @@ pwm_level_t adjust_speed(uint16_t currentDistance)
     ble_send(" \t");
     ble_send_uint16(mapSegments[currentSegment].segmentType);
     ble_send(" \t");
-    ble_send_uint16(mapSegments[currentSegment].segmentLength);
+    ble_send_uint16(mapSegments[currentSegment].segmentLength / 1000);
     ble_send(" \t");
     ble_send_uint16(mapSegments[currentSegment].segmentTime);
     ble_send("\n");
@@ -830,18 +849,24 @@ pwm_level_t adjust_speed(uint16_t currentDistance)
     ble_send_uint16(get_speed_mps_10(currentSpeed));
     ble_send(" cm/s\n");
     ble_send("currentDistance: ");
-    ble_send_uint16(currentDistance);
+    ble_send_uint16(currentDistance / 1000);
     ble_send("\n");
     ble_send("distanceToEnd: ");
-    ble_send_uint16(distanceToEnd);
+    ble_send_uint16(distanceToEnd / 1000);
+    ble_send("\n");
+    ble_send("transitionDistance: ");
+    ble_send_uint16(transitionDistance / 1000);
     ble_send("\n");
     #endif
 
     return currentSpeed;
-
 }
 
-uint8_t get_current_segment(uint16_t currentDistance)
+/***************************************************************************************************************/
+/*
+ * This function returns current segment from the map where the car is at the time
+ */
+uint8_t get_current_segment(uint32_t currentDistance)
 {
     uint8_t i = 0;
     for (i = 0; i < segmentsCount; i++) {
@@ -851,16 +876,13 @@ uint8_t get_current_segment(uint16_t currentDistance)
             return i; // Return the index of the current segment
         }
     }
-
-    if (i >= segmentsCount) {
-        i = 0;
-        mapCurrentDistance = 0;
-    }
-
     return 0;  // Default to first segment if no match found
 }
 
-
+/***************************************************************************************************************/
+/*
+ * This function returns speed in m/s.
+ */
 uint16_t get_speed_mps_10(pwm_level_t pwm_level)
 {
     switch(pwm_level)

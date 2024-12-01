@@ -34,16 +34,16 @@
 
 // VARIABLES
 typedef enum {
-    PWM_LEVEL_1  = 300, // 25%
-    PWM_LEVEL_2  = 280, // 30%
-    PWM_LEVEL_3  = 240, // 40%      // 0.6 m/s (updated 25/Nov/2024) - please double-check again!
-    PWM_LEVEL_4  = 200, // 50%
-    PWM_LEVEL_5  = 160, // 60%
-    PWM_LEVEL_6  = 120, // 70%
-    PWM_LEVEL_7  = 100, // 75%
-    PWM_LEVEL_8  = 80,  // 80%
-    PWM_LEVEL_9  = 40,  // 90%
-    PWM_LEVEL_10 = 000  // 100%
+    PWM_LEVEL_1  = 300, // 25%      // 0.25 m/s
+    PWM_LEVEL_2  = 280, // 30%      // 0.28 m/s
+    PWM_LEVEL_3  = 240, // 40%      // 0.60 m/s (updated 25/Nov/2024) - please double-check again!
+    PWM_LEVEL_4  = 200, // 50%      // 0.75 m/s
+    PWM_LEVEL_5  = 160, // 60%      // 1.00 m/s
+    PWM_LEVEL_6  = 120, // 70%      // 1.20 m/s
+    PWM_LEVEL_7  = 100, // 75%      // 1.25 m/s
+    PWM_LEVEL_8  = 80,  // 80%      // 1.40 m/s
+    PWM_LEVEL_9  = 40,  // 90%      // 1.80 m/s
+    PWM_LEVEL_10 = 000  // 100%     // 2.90 m/s
 } pwm_level_t;
 
 

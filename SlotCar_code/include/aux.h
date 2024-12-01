@@ -22,6 +22,7 @@
 #define LOWER_STRAIGHT_RANGE 1960       // define lower range for a straight section ADC readings
 #define UPPER_STRAIGHT_RANGE 1968       // define upper range for a straight section ADC readings
 #define MAX_LENGTH_REF_LAP 800          // set max length for REF_LAP in cm. After overflow FSM changes states
+#define MAX_NUMBER_OF_LAPS_IN_RACE 5    // set max number of laps during the race
 
 
     /* DEBUG */
@@ -29,9 +30,9 @@
 #define FSM_DBG                   // comment out to disable BLE DBG messages of FSM DEBUG
 //#define FSM_DBG_SEND_ADC          // comment out to disable BLE DBG messages of FSM SEND ADC DEBUG
 //#define MAP_DBG                   // comment out to disable BLE DBG messages of MAP function
-#define SPEED_DBG
-//#define CREATE_MAP_DBG
-#define BLE_DBG_MSGS
+//#define CREATE_MAP_DBG            // comment out to disable BLE DBG messages of MAP function
+#define SPEED_DBG                 // comment out to disable BLE DBG messages of SPEED adjusts
+#define BLE_DBG_MSGS              // comment out to disable BLE DBG messages of general usage
 
 // Define the states for the state machine
 typedef enum {
@@ -55,9 +56,9 @@ typedef struct {
 typedef struct {
     uint8_t segmentIndex;               // index of a section. Consider longer types for tracks with more than 255 segments
     uint8_t segmentType;                // type of a section; 0 = straight, 1 = right turn, 2 = left turn
-    uint32_t segmentLength;             // actual length of a section
+    uint32_t segmentLength;             // actual length of a section. mMltiply by 1000 to get in cm.
     uint16_t segmentTime;               // actual time of a section
-    uint32_t segmentDistanceFromStart;
+    uint32_t segmentDistanceFromStart;  // Distance from start of the lap. Multiply by 1000 to get in cm.
 }MapSegment;
 
 // VARIABLES
@@ -69,14 +70,14 @@ void car_control_FSM(void);             // a Finite State Machine for motor PWM 
 void state_transition(State new_state); // Transition between states
 void state_machine_reset(void);         // Reset State Machine
 uint16_t feed_stored_data(const uint16_t *storedData, uint16_t dataLength); // goes thru saved data and feeds it as an output
-void lap_counter(void);                 // when called it prints counted laps
+uint8_t lap_counter(void);              // when called it prints counted laps. Returns the lap number.
 bool save_to_map(uint16_t adcValue);    // save to map
 void show_map(void);                    // show map over BLE
 void dump_map(void);                    // delete all map samples
 uint8_t create_map(void);               // function to create map from ADC samples
 void show_map_segments(void);           // show map over BLE
-pwm_level_t adjust_speed(uint16_t currentDistance);
-uint8_t get_current_segment(uint16_t currentDistance);
-pwm_level_t get_speed_mps_10(pwm_level_t pwm_level);
+pwm_level_t adjust_speed(uint32_t currentDistance);     // adjust speed of the car
+uint8_t get_current_segment(uint32_t currentDistance);  // goes thru segments of the map and returns the current segment
+pwm_level_t get_speed_mps_10(pwm_level_t pwm_level);    // returns speed in m/s
 
 #endif /* AUX_H_ */
