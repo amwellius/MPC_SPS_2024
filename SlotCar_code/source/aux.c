@@ -186,6 +186,11 @@ void car_control_FSM(void)
         init_FSM_flag = false;
     }
 
+    // check for reset state
+    if (reset_flag) {
+
+    }
+
     uint16_t z_axis = 0;
     switch (current_state) {
         case STATE_REF_LAP:
@@ -212,7 +217,6 @@ void car_control_FSM(void)
                 // if CORRELATION_WINDOW=100, then this takes samples of 5 seconds of the track
             if (variable_delay_ms(2, 62)) {
                 z_axis = ADC_get_result(4);     // get ADC results
-//                save_to_map(z_axis);            // save to map
                 // map distance counter. 60 represents speed PWM_LEVEL_3 ~0.6 m/s
                 mapCurrentDistance += (uint32_t)60 * 62; // 62 is the variable delay in ms
 
@@ -223,12 +227,11 @@ void car_control_FSM(void)
                 #endif
                 #ifdef FSM_DBG
                 uint16_t temp_adc_data = feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH);
-//                if (corrDetectNewLapStart(feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH))) {
-                    // temp
-                    save_to_map(temp_adc_data);      // save to map
-                    if (corrDetectNewLapStart(temp_adc_data)) {
+                save_to_map(temp_adc_data);      // save to map
+                if (corrDetectNewLapStart(temp_adc_data)) {
                 #endif
                 #ifndef FSM_DBG
+                save_to_map(z_axis);      // save to map
                 if (corrDetectNewLapStart(z_axis)) {
                 #endif
                     #ifdef FSM_STATE_DBG
@@ -245,15 +248,21 @@ void car_control_FSM(void)
                     mapCurrentDistance = 0;         // set distance to 0
                                 // consider setting to something else for better synchronization
 
+                    // show map segments
+                    #ifdef FSM_DBG
+                    show_map_segments();
+                    #endif
+
                     // go to the next state
 //                    state_transition(STATE_STOPPED);
                     state_transition(STATE_SMART_RUNNING);
-                    show_map_segments();
 //                    state_transition(STATE_RUNNING);
                 }
                 // Emergency checker if correlation not found
                 if (mapCurrentDistance / 1000 >= MAX_LENGTH_REF_LAP) {
-                    ble_send("Correlation not found after reaching max length! \nStarting emergency FSM state...");
+                    ble_send("Correlation not found after reaching max length ");
+                    ble_send_uint16(MAX_LENGTH_REF_LAP);
+                    ble_send(" cm! \nStarting emergency FSM state...\n");
                     state_transition(STATE_RUNNING);
                 }
             }
@@ -275,7 +284,7 @@ void car_control_FSM(void)
             // adjust the time hence samples taken every second with variable delays
             if (flag_62ms) {
                 #ifdef FSM_DBG
-                z_axis = feed_stored_data(stored_track_data_4, STORED_DATA_4_LENGTH);
+                z_axis = feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH);
                 #endif
                 #ifndef FSM_DBG
                 z_axis = ADC_get_result(4);
@@ -285,35 +294,29 @@ void car_control_FSM(void)
                 {
                 case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
                 {
-                    LED_FR_ON();
-                    LED_FL_OFF();
+                    LED_FR_ON();    // control LEDs
+                    LED_FL_OFF();   // control LEDs
 
                     // Call led_brake() to indicate slowing down
-                    ble_send("right turn\n");
                     if (right_turn_flag) {
                         led_brake();
-                        left_turn_flag = true;
-                        ble_send("**right turn first time\n");
-                        right_turn_flag = false;
+                        left_turn_flag = true;      // set flag true
+                        right_turn_flag = false;    // set flag false
                     }
-
                     motor_pwm(PWM_LEVEL_3);
                     break;
                 }
                 case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
                 {
-                    LED_FL_ON();
+                    LED_FL_ON();    // control LEDs
 
                     // Call led_brake() to indicate slowing down
-                    ble_send("left turn\n");
-                    // set flag false
+
                     if (left_turn_flag) {
                         led_brake();
-                        right_turn_flag = true;
-                        ble_send("**left turn first time\n");
-                        left_turn_flag = false;
+                        right_turn_flag = true;     // set flag true
+                        left_turn_flag = false;     // set flag false
                     }
-
                     motor_pwm(PWM_LEVEL_3);
                     break;
                 }
@@ -326,9 +329,6 @@ void car_control_FSM(void)
                 {
                     LED_FL_OFF();
                     LED_FR_OFF();
-
-                    // debug msg
-                    ble_send("going straight\n");
 
                     // set flags for led_brake() true
                     right_turn_flag = true;
@@ -357,32 +357,49 @@ void car_control_FSM(void)
 
             /* SMART CODE HERE */
             static uint8_t laps = 0;
-            static pwm_level_t actual_speed = PWM_LEVEL_3 ;
+            static pwm_level_t actual_speed = PWM_LEVEL_3;  // initial speed at the start
             static uint16_t actual_speed_mps = 0;
-            actual_speed_mps = get_speed_mps_10(actual_speed);
+
+            actual_speed_mps = get_speed_mps_10(actual_speed); // get actual speed
 
             if (variable_delay_ms(2, 62)) {
-                // get current distance
-                // get mapCurrentDistance
-                static uint16_t temp_counter = 0;
-                temp_counter++;
-                // should this be zero the first time? OR adjusted to when the correlation finds it?
-                mapCurrentDistance += (uint32_t)actual_speed_mps * 62; // 62 is the variable delay in ms
-                actual_speed = adjust_speed(mapCurrentDistance);
+                // get ADC values either stored or real-time
+                #ifdef FSM_DBG
+                z_axis = feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH);
+                #endif
+                #ifndef FSM_DBG
+                z_axis = ADC_get_result(4);
+                #endif
+
+                mapCurrentDistance += (uint32_t)actual_speed_mps * 62; // 62 is the variable delay in ms // get mapCurrentDistance
+                actual_speed = adjust_speed(mapCurrentDistance);       // smart speed control
+                smart_car_leds(z_axis);                                // smart LEDs control
+
+                // Emergency override if real-time ADC value indicates a danger on the track in case of improper synchronization
+                if (z_axis < LOWER_STRAIGHT_RANGE - 3) {
+                    motor_pwm(PWM_LEVEL_3);
+                } else if (z_axis > UPPER_STRAIGHT_RANGE + 0) {
+                    motor_pwm(PWM_LEVEL_3);
+                }
+                // set condition when the lap ends
+                if (mapCurrentDistance >= mapTotalLength) {
+                    mapCurrentDistance -= mapTotalLength;   // wrap mapCurrentDistance around and continue
+                    laps = lap_counter();                   // call lap counter
+                } else if (reset_flag) {
+                    laps = lap_counter();                   // reset lap counter
+                }
+                //Set condition to move into the next state (e.g., end of the race)
+                if (laps >= MAX_NUMBER_OF_LAPS_IN_RACE) {
+                    state_transition(STATE_STOPPED);
+                    LED_FR_OFF();               // switch LEDs off
+                    LED_FL_OFF();               // switch LEDs off
+                    LED_RL_OFF();               // switch LEDs off
+                    LED_RL_OFF();               // switch LEDs off
+                    ble_send("Race Finished!\n");
+                }
             }
 
-            // set condition when the lap ends
-            if (mapCurrentDistance >= mapTotalLength) {
-                mapCurrentDistance -= mapTotalLength;   // wrap mapCurrentDistance around and continue
-                laps = lap_counter();                   // call lap counter
-            } else if (reset_flag) {
-                laps = lap_counter();                   // reset lap counter
-            }
-            //Set condition to move into the next state (e.g., end of the race)
-            if (laps >= MAX_NUMBER_OF_LAPS_IN_RACE) {
-                state_transition(STATE_STOPPED);
-                ble_send("Race Finished!\n");
-            }
+
 
             /*Set condition to move into next state */
 //            state_transition(10); // unknown state -> move to ERROR
@@ -403,8 +420,10 @@ void car_control_FSM(void)
 
             // blink rear LEDs when in stopped lap
             if (variable_delay_ms(1, 800)) {
-                LED_RR_toggle();
-                LED_RL_toggle();
+                LED_RR_toggle();    // toggle LEDs
+                LED_RL_toggle();    // toggle LEDs
+                LED_FR_toggle();    // toggle LEDs
+                LED_FL_toggle();    // toggle LEDs
             }
 
             /*Set condition to move into next state */
@@ -518,8 +537,14 @@ void state_machine_reset(void)
     state_FSM_flag6 = true;
     #endif
 
-    corrClearBuffers();     // clear correlation buffers
-    savedMapIndex = 0;       // set map index to 0
+    corrClearBuffers();         // clear correlation buffers
+    savedMapIndex = 0;          // set map index to 0
+    mapCurrentDistance = 0;     // reset mapCurrentDistance
+
+    LED_FR_OFF();               // switch LEDs off
+    LED_FL_OFF();               // switch LEDs off
+    LED_RL_OFF();               // switch LEDs off
+    LED_RL_OFF();               // switch LEDs off
     ble_send("State Machine Restarting...\n");
 }
 
@@ -662,6 +687,9 @@ void dump_map(void)
 uint8_t create_map(void)
 {
     uint16_t i = 0;
+    uint8_t ii = 0;
+    mapTotalDuration = 0;
+    mapTotalLength = 0;
     uint16_t segmentStartIndex = 0;
     uint8_t currentSegmentType = (trackMap[0].adcValue >= LOWER_STRAIGHT_RANGE && trackMap[0].adcValue <= UPPER_STRAIGHT_RANGE) ? STRAIGHT_SEGMENT : BEND_SEGMENT;
     uint16_t confirmingSampleCount = 0; // To track the number of confirming samples for transition
@@ -734,6 +762,11 @@ uint8_t create_map(void)
         ble_send("ERROR: Unknown Map Segment!\n");
     }
 
+    // get mapTotalDuration and mapTotalLength
+    for (ii = 0; ii < segmentCount; ii++ ) {
+        mapTotalDuration += mapSegments[ii].segmentTime;
+        mapTotalLength   += mapSegments[ii].segmentLength;
+    }
     ble_send("Map segmentation completed.\n");
 
     return segmentCount; // returns number of segments (number + 1)
@@ -745,8 +778,6 @@ uint8_t create_map(void)
 void show_map_segments(void)
 {
     uint8_t i = 0;
-    mapTotalDuration = 0;
-    mapTotalLength = 0;
 
     ble_send("MAP SEGMENTS:\n \tIndex \tType \tLength \tDur \tdistanceFromStart \n");
     for (i = 0; i < segmentsCount; i++ ) {
@@ -761,8 +792,6 @@ void show_map_segments(void)
         ble_send(" \t");
         ble_send_uint16(mapSegments[i].segmentDistanceFromStart / 1000);
         ble_send("\n");
-        mapTotalDuration += mapSegments[i].segmentTime;
-        mapTotalLength   += mapSegments[i].segmentLength;
     }
     ble_send("Total duration: ");
     ble_send_uint16(mapTotalDuration);
@@ -791,7 +820,7 @@ pwm_level_t adjust_speed(uint32_t currentDistance)
     ble_send("\n");
     #endif
 
-    // check if the next segment is not outside of range of all segments
+    // check if the next segment is not outside of range of all segments. // Add condition when segmentsCount only 1
     if (nextSegment >= segmentsCount) {
         distanceToEnd = mapSegments[segmentsCount - 1].segmentDistanceFromStart + mapSegments[segmentsCount - 1].segmentLength - currentDistance;
         nextSegment = 0; // set next segment as the first one in the lap map -> wrap around and go again as the race continuous
@@ -906,6 +935,60 @@ uint16_t get_speed_mps_10(pwm_level_t pwm_level)
         case PWM_LEVEL_9:  return 180;  // 1.8 m/s * 10 = 18
         case PWM_LEVEL_10: return 200;  // 2.0 m/s * 10 = 20
         default:           return 0;    // Return 0 if invalid PWM level
+    }
+}
+
+/***************************************************************************************************************/
+/*
+ * This functions controls LEDs according to the real-time ADC data
+ */
+void smart_car_leds(uint16_t z_axis)
+{
+    // set flags for turns
+    static bool right_turn_flag = true;
+    static bool left_turn_flag = true;
+
+    switch(z_axis) {
+        case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
+        {
+            LED_FR_ON();    // control LEDs
+            LED_FL_OFF();   // control LEDs
+
+            // Call led_brake() to indicate slowing down
+            if (right_turn_flag) {
+                led_brake();
+                left_turn_flag = true;      // set flag true
+                right_turn_flag = false;    // set flag false
+            }
+            break;
+        }
+        case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
+        {
+            LED_FL_ON();    // control LEDs
+
+            // Call led_brake() to indicate slowing down
+
+            if (left_turn_flag) {
+                led_brake();
+                right_turn_flag = true;     // set flag true
+                left_turn_flag = false;     // set flag false
+            }
+            break;
+        }
+        /* Invoke a rebuilt of this part!!
+         * The problem lays in changing from turn to turn. The ADC reads values inside the straight-sections region.
+         * This calls the led_brake() function to often when the speed is not and should not be changed.
+         */
+        default:
+        {
+            LED_FL_OFF();
+            LED_FR_OFF();
+
+            // set flags for led_brake() true
+            right_turn_flag = true;
+            left_turn_flag = true;
+            break;
+        }
     }
 }
 

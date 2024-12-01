@@ -43,10 +43,10 @@ int main(void)
     init_timerA1();
     motor_init();
     ADC_init();
-//    ADC_start();
+    ADC_start();
     UART_init();
 
-    // set 1 to start on start-up
+    // set 1 to start on start-up, 0 to wait for external command-line input
     external_control = 1;
 
     // Command-line controlled main infinite while loop
@@ -60,7 +60,7 @@ int main(void)
                 MASTER_BLE_DBG_flag = true;
             }
             if (variable_delay_ms(0, 120)) {
-            LED_FL_toggle(); // Blink LED to indicate software debug mode
+//            LED_FL_toggle(); // Blink LED to indicate software debug mode
             }
         #endif
 
@@ -73,7 +73,7 @@ int main(void)
             }
             case 1: // running state
             {
-                car_control_FSM();      // main function
+                car_control_FSM();      // main function program
                 break;
             }
             case 2: // reset state
@@ -85,7 +85,7 @@ int main(void)
                 dump_map();             // clear map
                 state_machine_reset();  // set car FSM to restart mode
                 reset_flag = true;      // set reset_flag to TRUE
-                segmentsCount = 0;      //reset counter for map segments
+                segmentsCount = 0;      // reset counter for map segments
                 break;
             }
             case 3: // show map state
