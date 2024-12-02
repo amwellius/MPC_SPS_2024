@@ -371,16 +371,10 @@ void car_control_FSM(void)
                 z_axis = ADC_get_result(4);
                 #endif
 
-                mapCurrentDistance += (uint32_t)actual_speed_mps * 62; // 62 is the variable delay in ms // get mapCurrentDistance
-                actual_speed = adjust_speed(mapCurrentDistance);       // smart speed control
-                smart_car_leds(z_axis);                                // smart LEDs control
+                mapCurrentDistance += (uint32_t)actual_speed_mps * 62;      // 62 is the variable delay in ms // get mapCurrentDistance
+                actual_speed = adjust_speed(mapCurrentDistance, z_axis);    // smart speed control
+                smart_car_leds(z_axis);                                     // smart LEDs control
 
-                // Emergency override if real-time ADC value indicates a danger on the track in case of improper synchronization
-                if (z_axis < LOWER_STRAIGHT_RANGE - 3) {
-                    motor_pwm(PWM_LEVEL_3);
-                } else if (z_axis > UPPER_STRAIGHT_RANGE + 0) {
-                    motor_pwm(PWM_LEVEL_3);
-                }
                 // set condition when the lap ends
                 if (mapCurrentDistance >= mapTotalLength) {
                     mapCurrentDistance -= mapTotalLength;   // wrap mapCurrentDistance around and continue
@@ -803,7 +797,7 @@ void show_map_segments(void)
 /*
  * Speed control function
  */
-pwm_level_t adjust_speed(uint32_t currentDistance)
+pwm_level_t adjust_speed(uint32_t currentDistance, uint16_t z_axis)
 {
     static pwm_level_t currentSpeed = PWM_LEVEL_4;  // Default speed for reference lap
     uint8_t currentSegment = get_current_segment(currentDistance);
@@ -858,6 +852,12 @@ pwm_level_t adjust_speed(uint32_t currentDistance)
            case PWM_LEVEL_9: currentSpeed = PWM_LEVEL_10; break;
            default: break;
        }
+        // Emergency override if real-time ADC value indicates a danger on the track in case of improper synchronization
+        if (z_axis < LOWER_STRAIGHT_RANGE - 3) {
+            currentSpeed = PWM_LEVEL_3;
+        } else if (z_axis > UPPER_STRAIGHT_RANGE + 1) {
+            currentSpeed = PWM_LEVEL_3;
+        }
     } else if (mapSegments[currentSegment].segmentType == BEND_SEGMENT && currentSpeed < PWM_LEVEL_4) {
         currentSpeed = PWM_LEVEL_4;
     }
