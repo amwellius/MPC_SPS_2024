@@ -20,12 +20,12 @@
     /* Correlation */
 // for test ride use DP=200, CW=300, SW=1
 #define DUMP_SAMPLES 2                      // Specify number of fed samples into the algorithm to be dumped at the beginning
-#define CORRELATION_WINDOW 50               // Number of samples for reference lap
+#define CORRELATION_WINDOW 80               // Number of samples for reference lap
 #define SLIDING_WINDOW 1                    // Number of samples to slide in the window
 #define CORRELATION_THRESHOLD 500           // CORRELATION_THRESHOLD for cross-correlation to detect a new lap
 #define CORRELATION_MATCH_THRESHOLD 100     // exactMatch threshold
-#define CORRELATION_SAD_THRESHOLD 380       // SAD threshold, the closer to 0 the higher the match // 380 as default?
-#define CORRELATION_MIN_POSITIVE 2          // Set minimum number for positive correlations
+#define CORRELATION_SAD_THRESHOLD 250       // SAD threshold, the closer to 0 the higher the match // 380 as default?
+#define CORRELATION_MIN_POSITIVE 1         // Set minimum number for positive correlations
 
 
     /* DEBUG */
