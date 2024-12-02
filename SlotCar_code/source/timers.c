@@ -185,14 +185,14 @@ __interrupt void Timer_A1(void)
         overflow_count6 = 0;             // Reset counter
     }
 
-    // Brake release flag checker
-    // If the flag_brakes_applied is set TRUE during the counting, the counter brake_release_counter is reset to count from 0.
-    if (flag_brakes_applied) {
+    // Brake LEDs release flag checker
+    // If the flag_brakes_LED_applied is set TRUE during the counting, the counter brake_release_counter is reset to count from 0.
+    if (flag_brakes_LED_applied) {
         brake_release_counter = 0;
-        flag_brakes_applied = false;
+        flag_brakes_LED_applied = false;
         brake_release_counter_start = true;
     }
-    // Brake release starter and counter
+    // Brake LEDs release starter and counter
     // switch on rear LEDs for BRAKE_RELEASE_LEDS_MS ms to indicate braking. Then switch off the LEDs.
     if (brake_release_counter_start) {
         brake_release_counter++;
@@ -202,6 +202,8 @@ __interrupt void Timer_A1(void)
             LED_RL_OFF();
         }
     }
+
+    // Brake motor release
 }
 
 
