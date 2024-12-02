@@ -436,7 +436,7 @@ void car_control_FSM(void)
             #endif
 
             // stop the engine
-            motor_brake();
+            motor_brake(BRAKE_LEVEL_INF);
 
             // blink rear LEDs when in stopped lap
             if (variable_delay_ms(1, 800)) {

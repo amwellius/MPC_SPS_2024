@@ -53,7 +53,7 @@ void LED_init(void);
 void led_flash_all(uint8_t const n); // number of flashes
 void led_brake(void);
 
-//////
+// VARIABLES
 extern volatile unsigned char flag_brakes_LED_applied;
 
 

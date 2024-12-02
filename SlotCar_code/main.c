@@ -68,7 +68,7 @@ int main(void)
         switch (external_control) {
             case 0: // stop state
             {
-                motor_brake();
+                motor_brake(BRAKE_LEVEL_INF);
                 break;
             }
             case 1: // running state
