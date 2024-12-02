@@ -170,6 +170,11 @@ void state_machine_init(void) {
     state_FSM_flag6 = true;
     #endif
 
+    LED_FR_OFF();               // switch LEDs off
+    LED_FL_OFF();               // switch LEDs off
+    LED_RL_OFF();               // switch LEDs off
+    LED_RL_OFF();               // switch LEDs off
+
     current_state = STATE_REF_LAP;
 
 //    current_state = STATE_DEBUG;    // debugging in process
