@@ -22,8 +22,8 @@
 #define CONFIRMING_SAMPLES_COUNT 2      // define a number of needed samples to start a new segment
 #define LOWER_STRAIGHT_RANGE 1960       // define lower range for a straight section ADC readings. Engine must be running to match this range!
 #define UPPER_STRAIGHT_RANGE 1968       // define upper range for a straight section ADC readings. Engine must be running to match this range!
-#define MAX_LENGTH_REF_LAP 2000          // set max length for REF_LAP in cm. After overflow FSM changes states
-#define MAX_NUMBER_OF_LAPS_IN_RACE 5    // set max number of laps during the race
+#define MAX_LENGTH_REF_LAP 2300         // set max length for REF_LAP in cm. After overflow FSM changes states
+#define MAX_NUMBER_OF_LAPS_IN_RACE 10   // set max number of laps during the race
 
 
     /* DEBUG */
