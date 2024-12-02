@@ -3,13 +3,10 @@ TO DO LIST:
   - add small braking when approaching a bend section
   - clean up the code
 
-TO DO LIST for the last week:
-  - test different CW and SW and DS to get the right SAD threshold!
-  - test different time intervals for car control and ADC
-
 CURRENTLY IN PROCESS:
   - fiding a new lap start - tunning
   - FSM for car control
+  - testing of different CW and SW and DS to get the right SAD threshold!
 
 ALREADY IMPLEMENTED:
   - basic functionality
@@ -30,6 +27,7 @@ ALREADY IMPLEMENTED:
 
   FUTURE TASKS:
   - normalize ADC samples to -100; 0; 100
+  - test different time intervals for car control and ADC
 
 NOTES TO FINDING A NEW LAP START
  - already tried many algorithms
