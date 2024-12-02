@@ -29,6 +29,7 @@ extern volatile unsigned char flag_31ms;         // Declare flag_31.75ms as exte
 extern volatile unsigned char flag_62ms;         // Declare flag_62.5ms as extern
 extern volatile unsigned char flag_500ms;        // Declare flag_500ms as extern
 extern volatile unsigned char flag_1000ms;       // Declare flag_1000ms as extern
+extern volatile bool flag_braking_in_progress;   // Declare flag for when brakes are applied
 extern volatile int32_t global_time_ms;          // Declare global time in ms counter;
 
 // FUNCTIONS

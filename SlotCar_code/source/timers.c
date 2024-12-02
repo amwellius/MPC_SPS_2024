@@ -18,8 +18,9 @@ volatile unsigned char flag_31ms = 0;               // Define flag_31.75ms
 volatile unsigned char flag_62ms = 0;               // Define flag_62.5ms
 volatile unsigned char flag_500ms = 0;              // Define flag_500ms
 volatile unsigned char flag_1000ms = 0;             // Define flag_1000ms
+volatile bool flag_braking_in_progress = false;    // Define braking in process
 static uint16_t overflow_count5 = 0;                // Incremented every 1 ms
-volatile int32_t global_time_ms   = 0;             // Global time in ms
+volatile int32_t global_time_ms   = 0;              // Global time in ms
 
 /* main clock 16 MHz
  * This function doesn’t set up the timer directly but ensures your system clock is running at 16 MHz.
@@ -217,8 +218,10 @@ __interrupt void Timer_A1(void)
     // Release brakes after brakes_strength ms. Then use idle motor mode to carry on in the code flow.
     if (brake_release_counter_start) {
         brake_release_counter++;
+        flag_braking_in_progress = true;    // if this flag is raised (true), braking is in process
         if (brake_release_counter >= brakes_strength) {
             brake_release_counter_start = false;
+            flag_braking_in_progress = false;    // set this flag false when braking ends
             /* Add condition after brakes released */
             motor_idle(); // set engine to idle (awaiting)
         }

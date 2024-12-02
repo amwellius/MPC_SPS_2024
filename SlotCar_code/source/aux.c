@@ -858,10 +858,18 @@ pwm_level_t adjust_speed(uint32_t currentDistance, uint16_t z_axis)
     if (distanceToEnd <= transitionDistance) {
         // check the next segment
         if (mapSegments[nextSegment].segmentType == BEND_SEGMENT && currentSpeed < PWM_LEVEL_4) {
+            // Brake ISR to prevent over-steering
+            switch (currentSpeed) {
+               case PWM_LEVEL_4: motor_brake(BRAKE_LEVEL_1); break;
+               case PWM_LEVEL_5: motor_brake(BRAKE_LEVEL_2); break;
+               case PWM_LEVEL_6: motor_brake(BRAKE_LEVEL_3); break;
+               case PWM_LEVEL_7: motor_brake(BRAKE_LEVEL_4); break;
+               case PWM_LEVEL_8: motor_brake(BRAKE_LEVEL_5); break;
+               case PWM_LEVEL_9: motor_brake(BRAKE_LEVEL_6); break;
+               default: break;
+           }
             currentSpeed = PWM_LEVEL_4;
-            /* what about using brakes here to slow down???? Use a ISR to release the brakes after a short time
-             * the release interval can be depended on the PWM_LEVEL, the higher the longer braking
-             */
+
         // condition to speed up by one when leaving a bend
         } else if (mapSegments[nextSegment].segmentType == STRAIGHT_SEGMENT && currentSpeed >= PWM_LEVEL_4) {
             currentSpeed = PWM_LEVEL_5;
@@ -872,30 +880,48 @@ pwm_level_t adjust_speed(uint32_t currentDistance, uint16_t z_axis)
            case PWM_LEVEL_3: currentSpeed = PWM_LEVEL_4; break;
            case PWM_LEVEL_4: currentSpeed = PWM_LEVEL_5; break;
            // comment out to enable higher speeds
-//           case PWM_LEVEL_5: currentSpeed = PWM_LEVEL_6; break;
-//           case PWM_LEVEL_6: currentSpeed = PWM_LEVEL_7; break;
-//           case PWM_LEVEL_7: currentSpeed = PWM_LEVEL_8; break;
-//           case PWM_LEVEL_8: currentSpeed = PWM_LEVEL_9; break;
-//           case PWM_LEVEL_9: currentSpeed = PWM_LEVEL_10; break;
+           case PWM_LEVEL_5: currentSpeed = PWM_LEVEL_6; break;
+           case PWM_LEVEL_6: currentSpeed = PWM_LEVEL_7; break;
+           case PWM_LEVEL_7: currentSpeed = PWM_LEVEL_8; break;
+           case PWM_LEVEL_8: currentSpeed = PWM_LEVEL_9; break;
+           case PWM_LEVEL_9: currentSpeed = PWM_LEVEL_10; break;
            default: currentSpeed = PWM_LEVEL_5; break;
        }
         // Emergency override if real-time ADC value indicates a danger on the track in case of improper synchronization
         if (z_axis < LOWER_STRAIGHT_RANGE - 3) {
+            motor_brake(BRAKE_LEVEL_1);
             currentSpeed = PWM_LEVEL_4;
 //            ble_send("emergency!\n");
         } else if (z_axis > UPPER_STRAIGHT_RANGE + 1) {
+            motor_brake(BRAKE_LEVEL_1);
             currentSpeed = PWM_LEVEL_4;
 //            ble_send("emergency!\n");
         }
     } else if (mapSegments[currentSegment].segmentType == BEND_SEGMENT && currentSpeed < PWM_LEVEL_4) {
+        // Brake ISR to prevent over-steering
+        switch (currentSpeed) {
+           case PWM_LEVEL_4: motor_brake(BRAKE_LEVEL_1); break;
+           case PWM_LEVEL_5: motor_brake(BRAKE_LEVEL_2); break;
+           case PWM_LEVEL_6: motor_brake(BRAKE_LEVEL_3); break;
+           case PWM_LEVEL_7: motor_brake(BRAKE_LEVEL_4); break;
+           case PWM_LEVEL_8: motor_brake(BRAKE_LEVEL_5); break;
+           case PWM_LEVEL_9: motor_brake(BRAKE_LEVEL_6); break;
+           default: break;
+       }
         currentSpeed = PWM_LEVEL_4;
     }
 
     /* !!!! Add condition to prevent speeding too much */
     /* !!!! Add condition to check ADC real-time samples to ensure better synchronization */
 
-    // change the speed of the motor
-    motor_pwm(currentSpeed);
+    // check if braking is in process
+    if (!flag_braking_in_progress) {
+        // change the speed of the motor
+        motor_pwm(currentSpeed);
+    } else {
+        ble_send("Braking in process...\n");
+    }
+
 
     // BLE DBG
     #ifdef SPEED_DBG
