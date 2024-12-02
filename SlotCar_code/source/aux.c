@@ -225,6 +225,26 @@ void car_control_FSM(void)
                 // map distance counter. 60 represents speed PWM_LEVEL_3 ~0.6 m/s
                 mapCurrentDistance += (uint32_t)60 * 62; // 62 is the variable delay in ms
 
+                // Use stupid LEDs
+                switch(z_axis) {
+                    case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
+                    {
+                        LED_FR_ON();    // control LEDs
+                        LED_FL_OFF();   // control LEDs
+                        break;
+                    }
+                    case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
+                    {
+                        LED_FL_ON();    // control LEDs
+                        break;
+                    }
+                    default:
+                    {
+                        LED_FL_OFF();
+                        LED_FR_OFF();
+                    }
+                }
+
                 #ifdef FSM_DBG_SEND_ADC
                 // Send data over UART BLUETOOTH
                 ble_send_uint16(z_axis);
@@ -254,6 +274,7 @@ void car_control_FSM(void)
                                 // consider setting to something else for better synchronization
 
                     // show map segments
+//                    show_map_segments();
                     #ifdef FSM_DBG
                     show_map_segments();
                     #endif
@@ -850,18 +871,21 @@ pwm_level_t adjust_speed(uint32_t currentDistance, uint16_t z_axis)
         switch (currentSpeed) {
            case PWM_LEVEL_3: currentSpeed = PWM_LEVEL_4; break;
            case PWM_LEVEL_4: currentSpeed = PWM_LEVEL_5; break;
-           case PWM_LEVEL_5: currentSpeed = PWM_LEVEL_6; break;
-           case PWM_LEVEL_6: currentSpeed = PWM_LEVEL_7; break;
-           case PWM_LEVEL_7: currentSpeed = PWM_LEVEL_8; break;
-           case PWM_LEVEL_8: currentSpeed = PWM_LEVEL_9; break;
-           case PWM_LEVEL_9: currentSpeed = PWM_LEVEL_10; break;
-           default: break;
+           // comment out to enable higher speeds
+//           case PWM_LEVEL_5: currentSpeed = PWM_LEVEL_6; break;
+//           case PWM_LEVEL_6: currentSpeed = PWM_LEVEL_7; break;
+//           case PWM_LEVEL_7: currentSpeed = PWM_LEVEL_8; break;
+//           case PWM_LEVEL_8: currentSpeed = PWM_LEVEL_9; break;
+//           case PWM_LEVEL_9: currentSpeed = PWM_LEVEL_10; break;
+           default: currentSpeed = PWM_LEVEL_5; break;
        }
         // Emergency override if real-time ADC value indicates a danger on the track in case of improper synchronization
         if (z_axis < LOWER_STRAIGHT_RANGE - 3) {
-            currentSpeed = PWM_LEVEL_3;
+            currentSpeed = PWM_LEVEL_4;
+//            ble_send("emergency!\n");
         } else if (z_axis > UPPER_STRAIGHT_RANGE + 1) {
-            currentSpeed = PWM_LEVEL_3;
+            currentSpeed = PWM_LEVEL_4;
+//            ble_send("emergency!\n");
         }
     } else if (mapSegments[currentSegment].segmentType == BEND_SEGMENT && currentSpeed < PWM_LEVEL_4) {
         currentSpeed = PWM_LEVEL_4;
