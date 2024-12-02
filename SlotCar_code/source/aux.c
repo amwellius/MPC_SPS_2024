@@ -326,10 +326,18 @@ void car_control_FSM(void)
                     // Call led_brake() to indicate slowing down
                     if (right_turn_flag) {
                         led_brake();
+                        motor_brake(BRAKE_LEVEL_1); // brake
                         left_turn_flag = true;      // set flag true
                         right_turn_flag = false;    // set flag false
                     }
-                    motor_pwm(PWM_LEVEL_3);
+
+                    // check for brakes and change speed accordingly
+                    if (!flag_braking_in_progress) {
+                        // change the speed of the motor
+                        motor_pwm(PWM_LEVEL_4);
+                    } else {
+//                        ble_send("Braking in process...\n");
+                    }
                     break;
                 }
                 case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
@@ -337,13 +345,20 @@ void car_control_FSM(void)
                     LED_FL_ON();    // control LEDs
 
                     // Call led_brake() to indicate slowing down
-
                     if (left_turn_flag) {
                         led_brake();
+                        motor_brake(BRAKE_LEVEL_1); // brake
                         right_turn_flag = true;     // set flag true
                         left_turn_flag = false;     // set flag false
                     }
-                    motor_pwm(PWM_LEVEL_3);
+
+                    // check for brakes and change speed accordingly
+                    if (!flag_braking_in_progress) {
+                        // change the speed of the motor
+                        motor_pwm(PWM_LEVEL_4);
+                    } else {
+//                        ble_send("Braking in process...\n");
+                    }
                     break;
                 }
 
@@ -360,7 +375,14 @@ void car_control_FSM(void)
                     right_turn_flag = true;
                     left_turn_flag = true;
 
-                    motor_pwm(PWM_LEVEL_4);
+                    // check for brakes and change speed accordingly
+                    if (!flag_braking_in_progress) {
+                        // change the speed of the motor
+                        motor_pwm(PWM_LEVEL_5);
+                    } else {
+                        ble_send("Braking in process...\n");
+                    }
+
                     break;
                 }
                 }

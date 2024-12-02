@@ -94,7 +94,7 @@ int main(void)
                external_control = 0; // go to stop state
                break;
             }
-            case 4: // show map state
+            case 4: // show segments state
             {
                show_map_segments();
                external_control = 0; // go to stop state
