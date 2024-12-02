@@ -6,8 +6,13 @@
  */
 
 // INCLUDES
+#include <stdbool.h>
 #include "include/motor.h"
 #include "include/timers.h"
+
+// VARIABLES
+volatile uint16_t brakes_strength = 0;
+volatile bool flag_brakes_applied = false;
 
 // FUNCTIONS
 void motor_init(void) {
@@ -31,10 +36,21 @@ void motor_reverse(void) {
 }
 
 // function for motor control brake
-void motor_brake(void) {
+void motor_brake(brake_level_t brake_strength_level) {
     H_IN_l;
     H_DIRECTION_l;
     H_BRAKE_h;
+
+    // use brake_strength to define timer for brake release.
+    brakes_strength = brake_strength_level;
+    // Assign strength of braking to a timer-type flag to release braking after specific time. Refer to "motor.h" for "brake_level_t".
+
+    // avoid assigning again when calling before timer time out
+    if (brake_strength_level == BRAKE_LEVEL_INF) {
+        flag_brakes_applied = false;    // never release brakes
+    } else {
+        flag_brakes_applied = true;
+    }
 }
 
 // function for motor control idle. This means the motor does not have power

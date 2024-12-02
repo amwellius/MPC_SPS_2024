@@ -9,6 +9,8 @@
 #include "include/timers.h"
 #include <msp430.h>
 #include "include/LED.h"
+#include "include/motor.h"
+#include "include/UART.h"
 
 // VARIABLES
 volatile unsigned char flag_1ms = 0;                // Define flag_1ms
@@ -18,7 +20,6 @@ volatile unsigned char flag_500ms = 0;              // Define flag_500ms
 volatile unsigned char flag_1000ms = 0;             // Define flag_1000ms
 static uint16_t overflow_count5 = 0;                // Incremented every 1 ms
 volatile int32_t global_time_ms   = 0;             // Global time in ms
-bool static brake_release_counter_start = false;    // Reset counter for brake release
 
 /* main clock 16 MHz
  * This function doesn’t set up the timer directly but ensures your system clock is running at 16 MHz.
@@ -173,8 +174,11 @@ __interrupt void Timer_B0(void)
 #pragma vector = TIMER1_A0_VECTOR
 __interrupt void Timer_A1(void)
 {
-    static uint8_t overflow_count6 = 0;         // Define overflow_count4
-    static uint16_t brake_release_counter = 0;  // Define counter for brake release functionality
+    static uint8_t overflow_count6 = 0;             // Define overflow_count4
+    static uint16_t brake_LED_release_counter = 0;  // Define counter for brake release functionality
+    static uint16_t brake_release_counter = 0;      // Define counter for brake release functionality
+    bool static brake_LED_release_counter_start = false;    // Reset counter for brake release
+    bool static brake_release_counter_start = false;        // Reset counter for brake release
 
     overflow_count5++;                   // Increment overflow counter 5 every 1ms for the various delay function
     overflow_count6++;                   // Increment overflow counter 6
@@ -188,25 +192,38 @@ __interrupt void Timer_A1(void)
     // Brake LEDs release flag checker
     // If the flag_brakes_LED_applied is set TRUE during the counting, the counter brake_release_counter is reset to count from 0.
     if (flag_brakes_LED_applied) {
-        brake_release_counter = 0;
+        brake_LED_release_counter = 0;
         flag_brakes_LED_applied = false;
-        brake_release_counter_start = true;
+        brake_LED_release_counter_start = true;
     }
     // Brake LEDs release starter and counter
     // switch on rear LEDs for BRAKE_RELEASE_LEDS_MS ms to indicate braking. Then switch off the LEDs.
-    if (brake_release_counter_start) {
-        brake_release_counter++;
-        if (brake_release_counter >= BRAKE_RELEASE_LEDS_MS) {
-            brake_release_counter_start = false;
+    if (brake_LED_release_counter_start) {
+        brake_LED_release_counter++;
+        if (brake_LED_release_counter >= BRAKE_RELEASE_LEDS_MS) {
+            brake_LED_release_counter_start = false;
             LED_RR_OFF();
             LED_RL_OFF();
         }
     }
 
-    // Brake motor release
+    // Brake motor release flag checker
+    if (flag_brakes_applied) {
+        brake_release_counter = 0;
+        flag_brakes_applied = false;
+        brake_release_counter_start = true;
+    }
+    // Brake release starter and counter
+    // Release brakes after brakes_strength ms. Then use idle motor mode to carry on in the code flow.
+    if (brake_release_counter_start) {
+        brake_release_counter++;
+        if (brake_release_counter >= brakes_strength) {
+            brake_release_counter_start = false;
+            /* Add condition after brakes released */
+            motor_idle(); // set engine to idle (awaiting)
+        }
+    }
 }
-
-
 
 
 

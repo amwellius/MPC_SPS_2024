@@ -10,6 +10,8 @@
 
 // INCLUDES
 #include <msp430.h>
+#include "stdint.h"
+#include <stdbool.h>
 
 // DEFINITIONS
 #define H_BRAKE_PORT     P8OUT  // P8.5/TA1.0
@@ -33,6 +35,7 @@
 #define H_DIRECTION_h   (H_DIRECTION_PORT &= ~H_DIRECTION_PIN)  // reversed h and l (dont know why but it works this way)
 
 // VARIABLES
+// Define levels for motor PWM control
 typedef enum {
     PWM_LEVEL_1  = 300, // 25%      // 0.25 m/s
     PWM_LEVEL_2  = 280, // 30%      // 0.28 m/s
@@ -46,13 +49,32 @@ typedef enum {
     PWM_LEVEL_10 = 000  // 100%     // 2.90 m/s
 } pwm_level_t;
 
+// Define levels for braking
+typedef enum {
+    BRAKE_LEVEL_1    = 50,     // value in ms
+    BRAKE_LEVEL_2    = 100,
+    BRAKE_LEVEL_3    = 150,
+    BRAKE_LEVEL_4    = 200,
+    BRAKE_LEVEL_5    = 250,
+    BRAKE_LEVEL_6    = 300,
+    BRAKE_LEVEL_7    = 350,
+    BRAKE_LEVEL_8    = 400,
+    BRAKE_LEVEL_9    = 450,
+    BRAKE_LEVEL_10   = 500,
+    BRAKE_LEVEL_INF  = 0,      // value used to never release while calledflag_brakes_applied
+}brake_level_t;
+
+// VARIABLES
+extern volatile uint16_t brakes_strength;
+extern volatile bool flag_brakes_applied;
+
 
 // FUNCTIONS
 void motor_init(void);
 void motor_forward(void);
 void motor_pwm(pwm_level_t level);
 void motor_reverse(void);
-void motor_brake(void);
+void motor_brake(brake_level_t brakes_strength);
 void motor_idle(void);
 
 
