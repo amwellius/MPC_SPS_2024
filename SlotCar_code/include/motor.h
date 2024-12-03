@@ -52,12 +52,12 @@ typedef enum {
 // Define levels for braking
 typedef enum {
     BRAKE_LEVEL_1    = 50,     // value in ms
-    BRAKE_LEVEL_2    = 100,
-    BRAKE_LEVEL_3    = 150,
-    BRAKE_LEVEL_4    = 200,
-    BRAKE_LEVEL_5    = 250,
-    BRAKE_LEVEL_6    = 300,
-    BRAKE_LEVEL_7    = 350,
+    BRAKE_LEVEL_2    = 60,
+    BRAKE_LEVEL_3    = 100,
+    BRAKE_LEVEL_4    = 130,
+    BRAKE_LEVEL_5    = 160,
+    BRAKE_LEVEL_6    = 190,
+    BRAKE_LEVEL_7    = 230,
     BRAKE_LEVEL_8    = 400,
     BRAKE_LEVEL_9    = 450,
     BRAKE_LEVEL_10   = 500,

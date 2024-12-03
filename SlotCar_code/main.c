@@ -47,7 +47,7 @@ int main(void)
     UART_init();
 
     // set 1 to start on start-up, 0 to wait for external command-line input
-    external_control = 0;
+    external_control = 1;
 
     // Command-line controlled main infinite while loop
     while(1)

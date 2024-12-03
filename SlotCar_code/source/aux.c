@@ -308,7 +308,8 @@ void car_control_FSM(void)
             static bool left_turn_flag = true;
 
             // adjust the time hence samples taken every second with variable delays
-            if (flag_62ms) {
+            if (variable_delay_ms(2, 20)) {
+//            if (flag_62ms) {
                 #ifdef FSM_DBG
                 z_axis = feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH);
                 #endif
@@ -318,7 +319,7 @@ void car_control_FSM(void)
 
                 switch(z_axis)
                 {
-                case 0 ... 1959:    // momentum vector RIGHT, RIGHT LED ON
+                case 0 ... LOWER_STRAIGHT_RANGE - 2:    // momentum vector RIGHT, RIGHT LED ON
                 {
                     LED_FR_ON();    // control LEDs
                     LED_FL_OFF();   // control LEDs
@@ -326,7 +327,7 @@ void car_control_FSM(void)
                     // Call led_brake() to indicate slowing down
                     if (right_turn_flag) {
                         led_brake();
-                        motor_brake(BRAKE_LEVEL_1); // brake
+                        motor_brake(BRAKE_LEVEL_2); // brake
                         left_turn_flag = true;      // set flag true
                         right_turn_flag = false;    // set flag false
                     }
@@ -340,14 +341,15 @@ void car_control_FSM(void)
                     }
                     break;
                 }
-                case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
+                case UPPER_STRAIGHT_RANGE + 2 ... 4095: // momentum vector LEFT, LEFT LED ON
                 {
                     LED_FL_ON();    // control LEDs
+                    LED_FR_OFF();   // control LEDs
 
                     // Call led_brake() to indicate slowing down
                     if (left_turn_flag) {
                         led_brake();
-                        motor_brake(BRAKE_LEVEL_1); // brake
+                        motor_brake(BRAKE_LEVEL_2); // brake
                         right_turn_flag = true;     // set flag true
                         left_turn_flag = false;     // set flag false
                     }
@@ -386,7 +388,7 @@ void car_control_FSM(void)
                     break;
                 }
                 }
-                flag_62ms = 0;
+//                flag_62ms = 0;
             }
             break;
         }
@@ -440,7 +442,13 @@ void car_control_FSM(void)
                     ble_send("Race Finished!\n");
                 }
             }
-
+            // emergency braking
+//            if (variable_delay_ms(3, 30)) {
+//                if (z_axis < )
+//                if (actual_speed < PWM_LEVEL_6) {
+//                    motor_brake(BRAKE_LEVEL_3);
+//                }
+//            }
 
 
             /*Set condition to move into next state */
@@ -882,12 +890,12 @@ pwm_level_t adjust_speed(uint32_t currentDistance, uint16_t z_axis)
         if (mapSegments[nextSegment].segmentType == BEND_SEGMENT && currentSpeed < PWM_LEVEL_4) {
             // Brake ISR to prevent over-steering
             switch (currentSpeed) {
-               case PWM_LEVEL_4: motor_brake(BRAKE_LEVEL_1); break;
-               case PWM_LEVEL_5: motor_brake(BRAKE_LEVEL_2); break;
-               case PWM_LEVEL_6: motor_brake(BRAKE_LEVEL_3); break;
-               case PWM_LEVEL_7: motor_brake(BRAKE_LEVEL_4); break;
-               case PWM_LEVEL_8: motor_brake(BRAKE_LEVEL_5); break;
-               case PWM_LEVEL_9: motor_brake(BRAKE_LEVEL_6); break;
+               case PWM_LEVEL_4: motor_brake(BRAKE_LEVEL_2); break;
+               case PWM_LEVEL_5: motor_brake(BRAKE_LEVEL_3); break;
+               case PWM_LEVEL_6: motor_brake(BRAKE_LEVEL_4); break;
+               case PWM_LEVEL_7: motor_brake(BRAKE_LEVEL_5); break;
+               case PWM_LEVEL_8: motor_brake(BRAKE_LEVEL_6); break;
+               case PWM_LEVEL_9: motor_brake(BRAKE_LEVEL_7); break;
                default: break;
            }
             currentSpeed = PWM_LEVEL_4;
@@ -895,6 +903,31 @@ pwm_level_t adjust_speed(uint32_t currentDistance, uint16_t z_axis)
         // condition to speed up by one when leaving a bend
         } else if (mapSegments[nextSegment].segmentType == STRAIGHT_SEGMENT && currentSpeed >= PWM_LEVEL_4) {
             currentSpeed = PWM_LEVEL_5;
+            // Emergency override if real-time ADC value indicates a danger on the track in case of improper synchronization
+            if (z_axis < LOWER_STRAIGHT_RANGE - 3) {
+                if (currentSpeed < PWM_LEVEL_5) {
+                    motor_brake(BRAKE_LEVEL_2);
+    //            ble_send("emergency!\n");
+                } else if (currentSpeed < PWM_LEVEL_6) {
+                    motor_brake(BRAKE_LEVEL_4);
+                }
+                else {
+                    motor_brake(BRAKE_LEVEL_1);
+        //            ble_send("emergency!\n");
+                }
+                currentSpeed = PWM_LEVEL_5; // set normal speed
+            } else if (z_axis > UPPER_STRAIGHT_RANGE + 0) {
+                if (currentSpeed < PWM_LEVEL_5) {
+                    motor_brake(BRAKE_LEVEL_2);
+    //            ble_send("emergency!\n");
+                } else if (currentSpeed < PWM_LEVEL_6) {
+                    motor_brake(BRAKE_LEVEL_3);
+                } else {
+                    motor_brake(BRAKE_LEVEL_1);
+        //            ble_send("emergency!\n");
+                }
+                currentSpeed = PWM_LEVEL_5; // set normal speed
+            }
         }
     } else if ((mapSegments[currentSegment].segmentType == STRAIGHT_SEGMENT) && (currentSpeed <= PWM_LEVEL_4)) {
         // very smart condition - it gradually speeds up!
@@ -903,21 +936,36 @@ pwm_level_t adjust_speed(uint32_t currentDistance, uint16_t z_axis)
            case PWM_LEVEL_4: currentSpeed = PWM_LEVEL_5; break;
            // comment out to enable higher speeds
            case PWM_LEVEL_5: currentSpeed = PWM_LEVEL_6; break;
-           case PWM_LEVEL_6: currentSpeed = PWM_LEVEL_7; break;
-           case PWM_LEVEL_7: currentSpeed = PWM_LEVEL_8; break;
-           case PWM_LEVEL_8: currentSpeed = PWM_LEVEL_9; break;
-           case PWM_LEVEL_9: currentSpeed = PWM_LEVEL_10; break;
+//           case PWM_LEVEL_6: currentSpeed = PWM_LEVEL_7; break;
+//           case PWM_LEVEL_7: currentSpeed = PWM_LEVEL_8; break;
+//           case PWM_LEVEL_8: currentSpeed = PWM_LEVEL_9; break;
+//           case PWM_LEVEL_9: currentSpeed = PWM_LEVEL_10; break;
            default: currentSpeed = PWM_LEVEL_5; break;
        }
         // Emergency override if real-time ADC value indicates a danger on the track in case of improper synchronization
         if (z_axis < LOWER_STRAIGHT_RANGE - 3) {
-            motor_brake(BRAKE_LEVEL_1);
-            currentSpeed = PWM_LEVEL_4;
+            if (currentSpeed < PWM_LEVEL_5) {
+                motor_brake(BRAKE_LEVEL_2);
 //            ble_send("emergency!\n");
-        } else if (z_axis > UPPER_STRAIGHT_RANGE + 1) {
-            motor_brake(BRAKE_LEVEL_1);
-            currentSpeed = PWM_LEVEL_4;
+            } else if (currentSpeed < PWM_LEVEL_6) {
+                motor_brake(BRAKE_LEVEL_3);
+            }
+            else {
+                motor_brake(BRAKE_LEVEL_1);
+    //            ble_send("emergency!\n");
+            }
+            currentSpeed = PWM_LEVEL_5; // set normal speed
+        } else if (z_axis > UPPER_STRAIGHT_RANGE + 0) {
+            if (currentSpeed < PWM_LEVEL_5) {
+                motor_brake(BRAKE_LEVEL_2);
 //            ble_send("emergency!\n");
+            } else if (currentSpeed < PWM_LEVEL_6) {
+                motor_brake(BRAKE_LEVEL_3);
+            } else {
+                motor_brake(BRAKE_LEVEL_1);
+    //            ble_send("emergency!\n");
+            }
+            currentSpeed = PWM_LEVEL_5; // set normal speed
         }
     } else if (mapSegments[currentSegment].segmentType == BEND_SEGMENT && currentSpeed < PWM_LEVEL_4) {
         // Brake ISR to prevent over-steering
@@ -1042,6 +1090,7 @@ void smart_car_leds(uint16_t z_axis)
         case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
         {
             LED_FL_ON();    // control LEDs
+            LED_FR_OFF();    // control LEDs
 
             // Call led_brake() to indicate slowing down
 
