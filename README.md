@@ -1,12 +1,8 @@
 TO DO LIST:
-  - experiment with different CORR thresholds and windows on the real track
-  - add small braking when approaching a bend section
   - clean up the code
 
 CURRENTLY IN PROCESS:
-  - fiding a new lap start - tunning
-  - FSM for car control
-  - testing of different CW and SW and DS to get the right SAD threshold!
+- none
 
 ALREADY IMPLEMENTED:
   - basic functionality
@@ -24,10 +20,12 @@ ALREADY IMPLEMENTED:
   - create a MAP of the track and control the car according the map and the real data
   - add ADC values as a safety to override reading-map-changing speed too much
   - add control for LEDs from real-time ADC samples
+  - add small braking when approaching a bend section
 
   FUTURE TASKS:
   - normalize ADC samples to -100; 0; 100
-  - test different time intervals for car control and ADC
+  - test different time intervals for car control and ADC - this will ensure more samples hence better reactions of the car (proven by other students)
+  - experiment with different CORR thresholds and windows on the real track
 
 NOTES TO FINDING A NEW LAP START
  - already tried many algorithms
