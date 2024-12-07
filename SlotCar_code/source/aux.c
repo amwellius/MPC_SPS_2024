@@ -236,6 +236,7 @@ void car_control_FSM(void)
                     case 1970 ... 4095: // momentum vector LEFT, LEFT LED ON
                     {
                         LED_FL_ON();    // control LEDs
+                        LED_FR_OFF();    // control LEDs
                         break;
                     }
                     default:
@@ -309,7 +310,6 @@ void car_control_FSM(void)
 
             // adjust the time hence samples taken every second with variable delays
             if (variable_delay_ms(2, 20)) {
-//            if (flag_62ms) {
                 #ifdef FSM_DBG
                 z_axis = feed_stored_data(stored_track_data_1, STORED_DATA_1_LENGTH);
                 #endif
@@ -388,7 +388,6 @@ void car_control_FSM(void)
                     break;
                 }
                 }
-//                flag_62ms = 0;
             }
             break;
         }
@@ -442,14 +441,6 @@ void car_control_FSM(void)
                     ble_send("Race Finished!\n");
                 }
             }
-            // emergency braking
-//            if (variable_delay_ms(3, 30)) {
-//                if (z_axis < )
-//                if (actual_speed < PWM_LEVEL_6) {
-//                    motor_brake(BRAKE_LEVEL_3);
-//                }
-//            }
-
 
             /*Set condition to move into next state */
 //            state_transition(10); // unknown state -> move to ERROR
@@ -468,7 +459,7 @@ void car_control_FSM(void)
             // stop the engine
             motor_brake(BRAKE_LEVEL_INF);
 
-            // blink rear LEDs when in stopped lap
+            // blink LEDs when in stopped lap
             if (variable_delay_ms(1, 800)) {
                 LED_RR_toggle();    // toggle LEDs
                 LED_RL_toggle();    // toggle LEDs
@@ -477,7 +468,6 @@ void car_control_FSM(void)
             }
 
             /*Set condition to move into next state */
-
 //            state_transition(10); // unknown state -> move to ERROR
             break;
         }

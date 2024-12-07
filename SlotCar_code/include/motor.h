@@ -61,7 +61,7 @@ typedef enum {
     BRAKE_LEVEL_8    = 400,
     BRAKE_LEVEL_9    = 450,
     BRAKE_LEVEL_10   = 500,
-    BRAKE_LEVEL_INF  = 0,      // value used to never release while calledflag_brakes_applied
+    BRAKE_LEVEL_INF  = 0,      // value used to never release while called flag_brakes_applied
 }brake_level_t;
 
 // VARIABLES
