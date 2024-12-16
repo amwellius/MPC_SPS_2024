@@ -4,7 +4,7 @@
 "./source/LED.obj"
 "./source/SPI.obj"
 "./source/UART.obj"
-"./source/aux.obj"
+"./source/auxiliary.obj"
 "./source/data_operation.obj"
 "./source/flash_memory.obj"
 "./source/motor.obj"

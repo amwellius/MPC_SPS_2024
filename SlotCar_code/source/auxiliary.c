@@ -1,14 +1,14 @@
 /*
- * aux.c
+ * auxiliary.c
  *
  *  Created on: 22/October/2024
  *      Author: xkosik09
  */
 
 // INCLUDES
+#include <include/auxiliary.h>
 #include <msp430.h>
 #include "include/timers.h"
-#include "include/aux.h"
 #include "include/ADC.h"
 #include "include/motor.h"
 #include "include/LED.h"

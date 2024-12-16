@@ -1,12 +1,12 @@
 /*
- * aux.h
+ * auxiliary.h
  *
  *  Created on: 22/October/2024
  *      Author: xkosik09
  */
 
-#ifndef AUX_H_
-#define AUX_H_
+#ifndef AUXILIARY_H_
+#define AUXILIARY_H_
 
 // INCLUDES
 #include <msp430.h>
@@ -84,4 +84,4 @@ uint8_t get_current_segment(uint32_t currentDistance);  // goes thru segments of
 pwm_level_t get_speed_mps_10(pwm_level_t pwm_level);    // returns speed in m/s
 void smart_car_leds(uint16_t z_axis);              // controls LEDs of the car with the real-time ADC values
 
-#endif /* AUX_H_ */
+#endif /* AUXILIARY_H_ */

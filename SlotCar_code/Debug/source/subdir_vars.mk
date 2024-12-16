@@ -9,7 +9,7 @@ C_SRCS += \
 ../source/LED.c \
 ../source/SPI.c \
 ../source/UART.c \
-../source/aux.c \
+../source/auxiliary.c \
 ../source/data_operation.c \
 ../source/flash_memory.c \
 ../source/motor.c \
@@ -21,7 +21,7 @@ C_DEPS += \
 ./source/LED.d \
 ./source/SPI.d \
 ./source/UART.d \
-./source/aux.d \
+./source/auxiliary.d \
 ./source/data_operation.d \
 ./source/flash_memory.d \
 ./source/motor.d \
@@ -33,7 +33,7 @@ OBJS += \
 ./source/LED.obj \
 ./source/SPI.obj \
 ./source/UART.obj \
-./source/aux.obj \
+./source/auxiliary.obj \
 ./source/data_operation.obj \
 ./source/flash_memory.obj \
 ./source/motor.obj \
@@ -45,7 +45,7 @@ OBJS__QUOTED += \
 "source/LED.obj" \
 "source/SPI.obj" \
 "source/UART.obj" \
-"source/aux.obj" \
+"source/auxiliary.obj" \
 "source/data_operation.obj" \
 "source/flash_memory.obj" \
 "source/motor.obj" \
@@ -57,7 +57,7 @@ C_DEPS__QUOTED += \
 "source/LED.d" \
 "source/SPI.d" \
 "source/UART.d" \
-"source/aux.d" \
+"source/auxiliary.d" \
 "source/data_operation.d" \
 "source/flash_memory.d" \
 "source/motor.d" \
@@ -69,7 +69,7 @@ C_SRCS__QUOTED += \
 "../source/LED.c" \
 "../source/SPI.c" \
 "../source/UART.c" \
-"../source/aux.c" \
+"../source/auxiliary.c" \
 "../source/data_operation.c" \
 "../source/flash_memory.c" \
 "../source/motor.c" \

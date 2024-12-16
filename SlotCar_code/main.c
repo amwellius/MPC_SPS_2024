@@ -3,6 +3,7 @@
  */
 
 // INCLUDES
+#include <include/auxiliary.h>
 #include <msp430.h>
 #include "include/timers.h"
 #include "include/SPI.h"
@@ -13,7 +14,6 @@
 #include "include/ADXL343.h"
 #include "include/motor.h"
 #include "include/UART.h"
-#include "include/aux.h"
 #include "include/flash_memory.h"
 //#include "include/data_temp_storage.h"
 #include "include/data_operation.h"
